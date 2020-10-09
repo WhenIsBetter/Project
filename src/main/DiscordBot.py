@@ -40,7 +40,7 @@ class DiscordBot:
 
     # Callback for messages. Should check if it's potentially a command
     #  and, if so, pass to _parse_command to check and delegate if so
-    async def on_message(self):
+    async def on_message(self, message):
         pass    # TODO
 
     # Internal function, taking a list of strings,
