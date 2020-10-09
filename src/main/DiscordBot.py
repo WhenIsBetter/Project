@@ -5,14 +5,14 @@ import discord
 class DiscordBot:
     #  -- Public: --
 
-    def __init__(self, token, client):
+    def __init__(self, token):
         # Misc. initializations go here:
         self.__scheduler = None
         self.token = token
 
         # Initialize variables related to the discord connection:
         self.client = discord.Client()
-        self.on_message = client.event(self.on_message)  # register with explicit decorator call
+        self.on_message = self.client.event(self.on_message)  # register with explicit decorator call
 
     # Finish setting up the object with the scheduler
     def attach_scheduler(self, scheduler):
