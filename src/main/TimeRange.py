@@ -3,7 +3,7 @@
 from datetime import datetime as Date
 
 
-class AvailableTime:
+class TimeRange:
 
     # the properties are so they're read-only
     # we might decide against this, but for now it seems a convenient way to work with the logic
@@ -15,6 +15,10 @@ class AvailableTime:
     @property
     def end(self):
         return self.__end
+
+    @property
+    def size(self):
+        return self.end - self.start
 
     __start = None    # type: Date
     __end = None
@@ -32,4 +36,4 @@ class AvailableTime:
         self.__start = start
         self.__end = end
 
-    # TODO: defining a __less__ and similar functions for comparing these
+    # TODO TODO: defining a __less__ and similar functions for comparing these

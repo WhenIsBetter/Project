@@ -1,62 +1,134 @@
+from src.main.TimeRange import TimeRange
 
 
 class EventScheduler:
 
     class _Node:
-        def __init__(self, content):
-            self.content = content
+        def __init__(self, key):
+            self.key = key
             self.prev = None
             self.next = None
 
     _start = _Node(None)
     _end = _Node(None)
 
+    class _List:
+        def __init__(self):
+            self.first = EventScheduler._start.deepcopy()
+            self.first.next = EventScheduler._end.deepcopy()
+
+        def empty(self):
+            return (self.first.next == EventScheduler._end)
+
+        def insert(self, new):
+            self.insert_after(self.find_prev(new.key))
+
+        def find_prev(self, key):
+            el = self.first.next
+            while el != EventScheduler._end:
+                if key > el.key:
+                    return el.prev
+                el = el.next
+            return el.prev
+
+        def insert_after(self, curr, new):
+            new.next = curr.next
+            new.prev = curr
+            curr.next.prev = new
+            curr.next = new
+
+        def delete(self, node):
+            if node == EventScheduler._start or node == EventScheduler._end:
+                raise Exception("Why are you deleting a start/end, stop that")
+
+            node.next.prev = node.prev
+            node.prev.next = node.next
+
     def __init__(self):
-        self._linked_list = {}
+        self._event_lists = {}
 
-    # returns a list of AvailableTime objects
+    def find_times(self, event, min_size):
+        outlist = self.calc_times(event)
+        result = {}
+
+        for i in sorted(outlist.keys()):
+            result[i] = []
+            for ran in outlist[i]:
+                if ran.size > min_size:
+                    result[i].append(ran)
+
+
+
+    # returns a dict of lists of TimeRange objects, such that ret[i] is the list of ranges with i events during them
     def calc_times(self, event):
-        pass
-
-        # check if event is in current_events, maybe?
+        llist = self._check_registered_event(event)
 
         # check if all the users have put in their calendars and whatnot
         # If they haven't, what to do? Throw an exception (not error, it's expected behavior)? TODO
 
-        # Algorithm to find times goes below:
+        outlist = {}
+        def temp_add(self, index, start, end):
+            if index not in self: self[index] = []
+            self[index].append(TimeRange(start, end))
+
+        if llist.empty():
+            return { [0]: TimeRange(event.start, event.end) }
+
+        new_start = llist.find_prev(event.start)
+        new_end = llist.find_prev(event.end)
+
+        if not new_start.key == event.start:
+            if new_start == EventScheduler._start:
+                outlist.temp_add(0, event.start, new_start.next.key)
+            elif new_start.key < event.start:   # fill in between event start and next time
+                outlist.temp_add(new_start.accum, event.start, new_start.next.key)
+            else: pass # ...this should never happen; add test or something to confirm
+            new_start = new_start.next
+        if not new_end.key == event.end:
+            outlist.temp_add(new_end.accum, new_end.key, event.end)
+
+        el = new_start
+        while el != new_end:
+            outlist.temp_add(el.accum, el.key, el.next.key)
+            el = el.next
+
+        return outlist
 
     def overlay_availability(self, event, avail):
-        if self.overlay_availability.link_add_helper is None:
-            def temp(curr_range, new_node):
-                new_node.next = curr_range.next
-                new_node.prev = curr_range
-                curr_range.next.prev = new_node
-                curr_range.next = new_node
-            self.overlay_availability.link_add_helper = temp
+        llist = self._check_registered_event(event)
 
-        if event not in self._linked_list:
-            raise Exception("Event wasn't added to current events")
-        new_node = EventScheduler._Node(avail)
+        new_start = EventScheduler._Node(avail.start)
+        new_start.source = avail
+        new_end = EventScheduler._Node(avail.end)
+        new_end.source = avail
 
-        curr_range = self._linked_list[event]
-        while curr_range.next != self._end and curr_range.content < new_node.content:
-            curr_range = curr_range.next
-        self.overlay_availability.link_add_helper(curr_range, new_node)
-    # TODO : This doesn't actually work, needs splitting 
-    overlay_availability.link_add_helper = None
+        empty = llist.empty()
+        llist.insert(new_start)
+        llist.insert(new_end)
 
+        if empty:
+            new_start.accum = 1
+            new_end.accum = 0
+        else:
+            new_start.accum = new_start.prev.accum
+            new_end.accum = new_end.prev.end
+
+            el = new_start
+            while el != new_end:
+                el.accum += 1
+                el = el.next
 
     def get_events(self):
-        return self._linked_list.keys()
+        return self._event_lists.keys()
 
     # I don't know what sorts of things should be passed in here
     # Also, should the DiscordBot class, in one of its command resolution functions,
     #  directly instantiate an Event? Or call a method here to create it,
     #   since Event is kind of under EventScheduler?
     def add_event(self, event):
-        new_start = EventScheduler._start.deepcopy()
-        new_start.next = EventScheduler._end.deepcopy()
+        self._event_lists[event] = EventScheduler._List()
 
-        self._linked_list[event] = new_start
-
-    # ... we need to figure out this API in more detail
+    def _check_registered_event(self, event):
+        if event not in self._event_lists:
+            raise Exception("Event wasn't added to current events")
+        return self._event_lists[event]
