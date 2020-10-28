@@ -7,13 +7,10 @@ class EventScheduler:
         def __init__(self, key):
             self.key = key
             self.prev = None
-            self.prev_lvl = None
             self.next = None
-            self.next_lvl = None
-            self.accum = None
 
-    _start = _Node(None) ; _start.accum = -1
-    _end = _Node(None) ; _end.accum = -1
+    _start = _Node(None)
+    _end = _Node(None)
 
     class _List:
         def __init__(self):
@@ -23,19 +20,8 @@ class EventScheduler:
         def empty(self):
             return (self.first.next == EventScheduler._end)
 
-        def insertStart(self, new):
-            self.insert_basic(self.find_prev(new.key), new)
-            new.accum = new.prev + 1
-            new.prevDrop = new.prev
-            new.prev.nextDrop = new.prev.nextDrop.nextDrop
-
-            new.nextDrop =
-
-        def insertEnd(self, new):
-            self.insert_basic(self.find_prev(new.key), new)
-            new.accum = new.prev
-            new.prevDrop =
-            new.nextDrop =
+        def insert(self, new):
+            self.insert_after(self.find_prev(new.key))
 
         def find_prev(self, key):
             el = self.first.next
@@ -45,7 +31,7 @@ class EventScheduler:
                 el = el.next
             return el.prev
 
-        def insert_basic(self, curr, new):
+        def insert_after(self, curr, new):
             new.next = curr.next
             new.prev = curr
             curr.next.prev = new
@@ -62,16 +48,13 @@ class EventScheduler:
         self._event_lists = {}
 
     # returns a dict of lists of TimeRange objects, such that ret[i] is the list of ranges with i events during them
-    def calc_times(self, event):
+    def calc_times(self, event, max_missing = 0, min_time = 0):
         llist = self._check_registered_event(event)
 
         # check if all the users have put in their calendars and whatnot
         # If they haven't, what to do? Throw an exception (not error, it's expected behavior)? TODO
 
-        outlist = {}
-        def temp_add(self, index, start, end):
-            if index not in self: self[index] = []
-            self[index].append(TimeRange(start, end))
+        outlist = []
 
         if llist.empty():
             return { [0]: TimeRange(event.start, event.end) }
@@ -85,14 +68,25 @@ class EventScheduler:
             elif new_start.key < event.start:   # fill in between event start and next time
                 outlist.temp_add(new_start.accum, event.start, new_start.next.key)
             else: pass # ...this should never happen; add test or something to confirm
+            # bundle-in if needed
             new_start = new_start.next
         if not new_end.key == event.end:
+            # add walk-back TODO
             outlist.temp_add(new_end.accum, new_end.key, event.end)
 
-        el = new_start
-        while el != new_end:
-            outlist.temp_add(el.accum, el.key, el.next.key)
-            el = el.next
+        s_el = new_start
+        while s_el != new_end:
+            while s_el.accum > max_missing:
+                s_el = s_el.next
+
+            e_el = s_el.next
+            while e_el.next.accum <= max_missing:
+                e_el = e_el.next
+
+            ran = TimeRange(s_el.key, e_el.key)
+            if ran.size > min_time:
+                outlist.append(ran)
+            s_el = e_el.next
 
         return outlist
 
