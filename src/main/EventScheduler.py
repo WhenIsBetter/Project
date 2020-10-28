@@ -7,10 +7,13 @@ class EventScheduler:
         def __init__(self, key):
             self.key = key
             self.prev = None
+            self.prev_lvl = None
             self.next = None
+            self.next_lvl = None
+            self.accum = None
 
-    _start = _Node(None)
-    _end = _Node(None)
+    _start = _Node(None) ; _start.accum = -1
+    _end = _Node(None) ; _end.accum = -1
 
     class _List:
         def __init__(self):
@@ -20,8 +23,19 @@ class EventScheduler:
         def empty(self):
             return (self.first.next == EventScheduler._end)
 
-        def insert(self, new):
-            self.insert_after(self.find_prev(new.key))
+        def insertStart(self, new):
+            self.insert_basic(self.find_prev(new.key), new)
+            new.accum = new.prev + 1
+            new.prevDrop = new.prev
+            new.prev.nextDrop = new.prev.nextDrop.nextDrop
+
+            new.nextDrop =
+
+        def insertEnd(self, new):
+            self.insert_basic(self.find_prev(new.key), new)
+            new.accum = new.prev
+            new.prevDrop =
+            new.nextDrop =
 
         def find_prev(self, key):
             el = self.first.next
@@ -31,7 +45,7 @@ class EventScheduler:
                 el = el.next
             return el.prev
 
-        def insert_after(self, curr, new):
+        def insert_basic(self, curr, new):
             new.next = curr.next
             new.prev = curr
             curr.next.prev = new
@@ -46,18 +60,6 @@ class EventScheduler:
 
     def __init__(self):
         self._event_lists = {}
-
-    def find_times(self, event, min_size):
-        outlist = self.calc_times(event)
-        result = {}
-
-        for i in sorted(outlist.keys()):
-            result[i] = []
-            for ran in outlist[i]:
-                if ran.size > min_size:
-                    result[i].append(ran)
-
-
 
     # returns a dict of lists of TimeRange objects, such that ret[i] is the list of ranges with i events during them
     def calc_times(self, event):
