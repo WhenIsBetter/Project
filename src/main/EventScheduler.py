@@ -1,3 +1,5 @@
+import copy
+
 from src.main.TimeRange import TimeRange
 
 
@@ -9,24 +11,32 @@ class EventScheduler:
             self.prev = None
             self.next = None
 
+        def __str__(self):
+            return f"Node({self.key})"
+
     _start = _Node(None)
     _end = _Node(None)
 
     class _List:
         def __init__(self):
-            self.first = EventScheduler._start.deepcopy()
-            self.first.next = EventScheduler._end.deepcopy()
+            self.first = copy.copy(EventScheduler._start)
+            self.last = copy.copy(EventScheduler._end)
+            self.first.next = self.last
+            self.last.prev = self.first
 
         def empty(self):
-            return (self.first.next == EventScheduler._end)
+            return (self.first.next == self.last)
 
         def insert(self, new):
-            self.insert_after(self.find_prev(new.key))
+            prel = self.find_prev(new.key)
+            if prel == new:
+                raise Exception("Why are you reinserting the same element")
+            self.insert_after(prel, new)
 
         def find_prev(self, key):
             el = self.first.next
-            while el != EventScheduler._end:
-                if key > el.key:
+            while el != self.last:
+                if key < el.key:
                     return el.prev
                 el = el.next
             return el.prev
@@ -38,7 +48,7 @@ class EventScheduler:
             curr.next = new
 
         def delete(self, node):
-            if node == EventScheduler._start or node == EventScheduler._end:
+            if node == self.first or node == self.last:
                 raise Exception("Why are you deleting a start/end, stop that")
 
             node.next.prev = node.prev
@@ -63,7 +73,7 @@ class EventScheduler:
         new_end = llist.find_prev(event.end)
 
         if not new_start.key == event.start:
-            if new_start == EventScheduler._start:
+            if new_start == self.first:
                 outlist.temp_add(0, event.start, new_start.next.key)
             elif new_start.key < event.start:   # fill in between event start and next time
                 outlist.temp_add(new_start.accum, event.start, new_start.next.key)
