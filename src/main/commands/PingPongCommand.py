@@ -1,6 +1,6 @@
 from discord import Message
 
-from commands.AbstractCommand import AbstractCommand
+from src.main.commands.AbstractCommand import AbstractCommand
 
 
 # A simple command to demonstrate how to set up a command instance that extends the AbstractCommand class
