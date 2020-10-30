@@ -117,7 +117,7 @@ class EventScheduler:
             new_end.accum = 0
         else:
             new_start.accum = new_start.prev.accum
-            new_end.accum = new_end.prev.end
+            new_end.accum = new_end.prev.accum
 
             el = new_start
             while el != new_end:

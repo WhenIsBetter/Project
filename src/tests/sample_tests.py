@@ -122,7 +122,51 @@ def event_test():
      for (i,j) in zip(ES.get_events(), [ev, ev2]):
          expect(i, j)
 
-#def overlay_availability_test:
+@ptest
+def overlay_availability_test():
+    now = datetime.datetime.today()
+
+    def CD(hours):  # 'current date' -- convenience function here
+        return now + datetime.timedelta(hours=hours)
+
+    ev = Event(CD(4), CD(10))
+
+    ES = EventScheduler()
+    ES.add_event(ev)
+
+    # Try one event
+
+    p1 = TimeRange(CD(4), CD(8))
+    ES.overlay_availability(ev, p1)
+
+    expect(ES._event_lists[ev].first.next.key, CD(4))
+    expect(ES._event_lists[ev].first.next.accum, 1)
+    expect(ES._event_lists[ev].first.next.next.key, CD(8))
+    expect(ES._event_lists[ev].first.next.next.accum, 0)
+
+    # overlap start/end of events
+
+    p2 = TimeRange(CD(7), CD(9))
+    ES.overlay_availability(ev, p2)
+
+    # contain one event within another
+
+    p3 = TimeRange(CD(5), CD(6))
+    ES.overlay_availability(ev, p3)
+
+    expect(ES._event_lists[ev].first.next.key, CD(4))
+    expect(ES._event_lists[ev].first.next.accum, 1)
+    expect(ES._event_lists[ev].first.next.next.key, CD(5))
+    expect(ES._event_lists[ev].first.next.next.accum, 2)
+    expect(ES._event_lists[ev].first.next.next.next.key, CD(6))
+    expect(ES._event_lists[ev].first.next.next.next.accum, 1)
+    expect(ES._event_lists[ev].first.next.next.next.next.key, CD(7))
+    expect(ES._event_lists[ev].first.next.next.next.next.accum, 2)
+    expect(ES._event_lists[ev].first.next.next.next.next.next.key, CD(8))
+    expect(ES._event_lists[ev].first.next.next.next.next.next.accum, 1)
+    expect(ES._event_lists[ev].first.next.next.next.next.next.next.key, CD(9))
+    expect(ES._event_lists[ev].first.next.next.next.next.next.next.accum, 0)
+
 
 # ----
 
