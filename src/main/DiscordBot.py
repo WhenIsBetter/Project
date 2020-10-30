@@ -4,9 +4,9 @@ import discord
 # Represents an instance of the bot for one specific server
 from discord import Message
 
-from commands.ArgsTestCommand import ArgsTestCommand
-from commands.PingPongCommand import PingPongCommand
-from commands.AbstractCommand import AbstractCommand
+from src.main.commands.ArgsTestCommand import ArgsTestCommand
+from src.main.commands.PingPongCommand import PingPongCommand
+from src.main.commands.AbstractCommand import AbstractCommand
 
 
 class DiscordBot:
