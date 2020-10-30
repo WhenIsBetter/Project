@@ -194,7 +194,6 @@ def overlay_availability_test():
 
 @ptest
 def overlay_availability_test_2():
-    # 2, 5, 3, 2, 2, 1, 0 -- I think -- is the # of lines of output for each test here
 
     (ev, ES, CD) = testing_scenario2(3, 10)
     for result in ES.calc_times(ev):

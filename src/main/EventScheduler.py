@@ -6,6 +6,7 @@ from src.main.TimeRange import TimeRange
 
 class EventScheduler:
 
+    # standard linked list node. key should be a datetime
     class _Node:
         def __init__(self, key):
             self.key = key
@@ -18,6 +19,7 @@ class EventScheduler:
     _start = _Node(None)
     _end = _Node(None)
 
+    # standard linked list.
     class _List:
         def __init__(self):
             self.first = copy.copy(EventScheduler._start)
@@ -56,7 +58,7 @@ class EventScheduler:
             node.prev.next = node.next
 
     def __init__(self):
-        self._event_lists = {}
+        self._event_lists = {}  # maps evens to the linked list representing their availability issues
 
     # returns a dict of lists of TimeRange objects, such that ret[i] is the list of ranges with i events during them
     def calc_times(self, event, max_missing = 0, min_time = datetime.timedelta(0) ):
@@ -70,25 +72,36 @@ class EventScheduler:
         if llist.empty():
             return { [0]: TimeRange(event.start, event.end) }
 
+        # The range we're actually looking between for the event
         new_start = llist.find_prev(event.start)
         new_end = llist.find_prev(event.end)
 
+        # lots of careful work to handle when the event doesn't line up with availability lines
+        start_append = False
+        end_append = False
         if not new_start.key == event.start:
             if new_start == llist.first:
+                start_append = True
                 outlist.append(TimeRange(event.start, new_start.next.key)) # 0
             elif new_start.key < event.start:   # fill in between event start and next time
-                outlist.append( TimeRange(event.start, new_start.next.key)) # new_start.accum,
+                if new_start.accum <= max_missing:
+                    start_append = True
+                    outlist.append( TimeRange(event.start, new_start.next.key)) # new_start.accum,
             else: pass # ...this should never happen; add test or something to confirm
             # bundle-in if needed
             new_start = new_start.next
         if not new_end.key == event.end:
-            # add walk-back TODO
+            end_append = True
             outlist.append( TimeRange( new_end.key, event.end) )   #new_end.accum
 
+        # A truly awful loop. I'm sorry, I can't properly comment this.
+        # roughly, it moves the 'start element' forward, then the 'end element' forward from there,
+        #  until a range with an acceptable # missing is found
+
+        added_something = False
         s_el = new_start
         while s_el != llist.last and s_el != new_end and s_el.accum > max_missing:
             s_el = s_el.next
-
         while s_el != llist.last and s_el.next != llist.last and s_el != new_end:
 
             e_el = s_el.next
@@ -98,6 +111,7 @@ class EventScheduler:
             ran = TimeRange(s_el.key, e_el.key)
             if ran.size > min_time:
                 outlist.append(ran)
+                added_something = True
             s_el = e_el.next
 
             if e_el == new_end:
@@ -105,11 +119,27 @@ class EventScheduler:
 
             while s_el != llist.last and s_el != new_end and s_el.accum > max_missing:
                 s_el = s_el.next
+
+        outlist.sort( key = lambda tr: tr.start )   #either start or end should work
+
+        # combine the lil' bits off the start/end we chopped off earlier
+        if added_something:
+            if start_append:
+                first = outlist.pop(0)
+                second = outlist[0]
+                outlist[0] = TimeRange(first.start, second.end)
+
+            if end_append:
+                last = outlist.pop(-1)
+                second_to_last = outlist[-1]
+                outlist[-1] = TimeRange(second_to_last.start, last.end)
+
         return outlist
 
     def overlay_availability(self, event, avail):
         llist = self._check_registered_event(event)
 
+        # construct the new start and end nodes
         new_start = EventScheduler._Node(avail.start)
         new_start.source = avail
         new_end = EventScheduler._Node(avail.end)
@@ -119,16 +149,21 @@ class EventScheduler:
         llist.insert(new_start)
         llist.insert(new_end)
 
+        # IMPORTANT: accum is always +1/-1 relative to the previous element
+        #  it measures the number of people missing immediately after the relevant time
+        #  hence, the first availability added will be
+        #  1 at start (right after, 1 person's gone) and 0 at end (nobody else missing then)
+
         if empty:
             new_start.accum = 1
             new_end.accum = 0
         else:
-            new_start.accum = new_start.prev.accum
+            new_start.accum = new_start.prev.accum  # gets +1ed below
             new_end.accum = new_end.prev.accum
 
-            el = new_start
+            el = new_start      # if 1 person's missing for a given amount of time...
             while el != new_end:
-                el.accum += 1
+                el.accum += 1   # ...then 1 more will be missing at each discrete point on the span they're gone
                 el = el.next
 
     def get_events(self):
