@@ -1,14 +1,12 @@
-from src.main import DiscordBot
-from src.tests.lib import FakeChannel
+from spm_bot.DiscordBot import DiscordBot
+from lib import FakeChannel
 import multiprocessing
 import time
 import traceback
-
 import datetime
-
-from src.main.Event import Event
-from src.main.EventScheduler import EventScheduler
-from src.main.TimeRange import TimeRange
+from spm_bot.Event import Event
+from scheduler.EventScheduler import EventScheduler
+from scheduler.TimeRange import TimeRange
 
 __tests = []
 
@@ -43,9 +41,9 @@ def busy_ptest_f(delay = 2.0, message = None):
 @busy_ptest_f(delay=0.5)
 def testBot():
     TOKEN = open("../../deploy/token.txt", "r").read()
-    bot = DiscordBot(TOKEN)
+    bot = DiscordBot()
     print(f"Logged in and ready to go!")
-    bot.run()
+    bot.run(TOKEN)
 
 @ptest
 def testTimeRange():
@@ -238,7 +236,7 @@ def overlay_availability_test_2():
 # Create a fake discord text channel to use for relaying fake messages to the bot
 fake_channel = FakeChannel.FakeChannel()
 # Create the bot object but do not login
-bot = DiscordBot.DiscordBot()
+bot = DiscordBot()
 # Bind the on_message method to our fake channel
 fake_channel.add_callback(bot.on_message)
 

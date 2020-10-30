@@ -1,6 +1,6 @@
 from discord import Message
 
-from src.main.commands.AbstractCommand import AbstractCommand
+from spm_bot.commands.AbstractCommand import AbstractCommand
 
 
 # A simple command to test the use of arguments in a command

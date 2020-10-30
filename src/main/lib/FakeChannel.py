@@ -1,6 +1,6 @@
 from discord import TextChannel
 
-from src.tests.lib import FakeMessage
+from lib import FakeMessage
 
 
 # Since our bot infrastructure depends on discord.py classes and their methods, we are going to spoof them by

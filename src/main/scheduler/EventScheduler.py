@@ -1,7 +1,6 @@
 import copy
 import datetime
-
-from src.main.TimeRange import TimeRange
+from scheduler.TimeRange import TimeRange
 
 
 class EventScheduler:
