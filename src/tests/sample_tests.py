@@ -1,13 +1,12 @@
-import discord.ext.test as dpytest
-import pytest
-
 from src.main import DiscordBot
+from src.tests.lib import FakeChannel
 
-from src.tests.lib import FakeChannel, FakeMessage
 
+# Create a fake discord text channel to use for relaying fake messages to the bot
 fake_channel = FakeChannel.FakeChannel()
-
+# Create the bot object but do not login
 bot = DiscordBot.DiscordBot()
+# Bind the on_message method to our fake channel
 fake_channel.add_callback(bot.on_message)
 
 
@@ -43,9 +42,10 @@ async def test_args_test_command2(loop):
 
 
 import asyncio
-
 loop = asyncio.get_event_loop()
 print()
+
+# Tests to run
 loop.run_until_complete(test_ping_pong_command(loop))
 loop.run_until_complete(test_args_test_command1(loop))
 loop.run_until_complete(test_args_test_command2(loop))
