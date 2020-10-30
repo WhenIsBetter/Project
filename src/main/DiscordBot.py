@@ -12,10 +12,9 @@ from src.main.commands.AbstractCommand import AbstractCommand
 class DiscordBot:
     #  -- Public: --
 
-    def __init__(self, token):
+    def __init__(self):
         # Misc. initializations go here:
         self.__scheduler = None
-        self.token = token
 
         # Initialize variables related to the discord connection:
         self.client = discord.Client()
@@ -50,8 +49,8 @@ class DiscordBot:
     # -- Private: --
 
     # literally just pass on the run command
-    def run(self, *args, **kwargs):
-        self.client.run(self.token, *args, **kwargs)
+    def run(self, token, *args, **kwargs):
+        self.client.run(token, *args, **kwargs)
 
     # Registers a command that the discord bot should listen for and execute, a command we register should extend
     # AbstractCommand. If a command with a conflicting name exists, an error will be thrown.
@@ -78,10 +77,6 @@ class DiscordBot:
     # Callback for messages. Should check if it's potentially a command
     #  and, if so, pass to _parse_command to check and delegate if so
     async def on_message(self, message: Message):
-
-        # Ignore messages from bots
-        if message.author.bot:
-            return
 
         # Does the message start with our prefix? If so parse it and handle it
         if message.content.startswith(self.command_prefix):
