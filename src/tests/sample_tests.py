@@ -43,7 +43,6 @@ async def test_args_test_command2(loop):
 
 import asyncio
 loop = asyncio.get_event_loop()
-print()
 
 # Tests to run
 loop.run_until_complete(test_ping_pong_command(loop))
