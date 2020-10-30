@@ -1,4 +1,4 @@
 .idea/
 *.pyc
-deploy/token.txt
+*.txt
 env
