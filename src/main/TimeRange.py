@@ -34,3 +34,6 @@ class TimeRange:
 
         self.__start = start
         self.__end = end
+
+    def __str__(self):
+        return f"TimeRange({self.start}, {self.end})"

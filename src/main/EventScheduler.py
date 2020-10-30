@@ -1,4 +1,5 @@
 import copy
+import datetime
 
 from src.main.TimeRange import TimeRange
 
@@ -58,7 +59,7 @@ class EventScheduler:
         self._event_lists = {}
 
     # returns a dict of lists of TimeRange objects, such that ret[i] is the list of ranges with i events during them
-    def calc_times(self, event, max_missing = 0, min_time = 0):
+    def calc_times(self, event, max_missing = 0, min_time = datetime.timedelta(0) ):
         llist = self._check_registered_event(event)
 
         # check if all the users have put in their calendars and whatnot
@@ -73,24 +74,25 @@ class EventScheduler:
         new_end = llist.find_prev(event.end)
 
         if not new_start.key == event.start:
-            if new_start == self.first:
-                outlist.temp_add(0, event.start, new_start.next.key)
+            if new_start == llist.first:
+                outlist.append(TimeRange(event.start, new_start.next.key)) # 0
             elif new_start.key < event.start:   # fill in between event start and next time
-                outlist.temp_add(new_start.accum, event.start, new_start.next.key)
+                outlist.append( TimeRange(event.start, new_start.next.key)) # new_start.accum,
             else: pass # ...this should never happen; add test or something to confirm
             # bundle-in if needed
             new_start = new_start.next
         if not new_end.key == event.end:
             # add walk-back TODO
-            outlist.temp_add(new_end.accum, new_end.key, event.end)
+            outlist.append( TimeRange( new_end.key, event.end) )   #new_end.accum
 
         s_el = new_start
-        while s_el != new_end:
-            while s_el.accum > max_missing:
-                s_el = s_el.next
+        while s_el != llist.last and s_el != new_end and s_el.accum > max_missing:
+            s_el = s_el.next
+
+        while s_el != llist.last and s_el.next != llist.last and s_el != new_end:
 
             e_el = s_el.next
-            while e_el.next.accum <= max_missing:
+            while e_el.next != llist.last and e_el.accum <= max_missing:
                 e_el = e_el.next
 
             ran = TimeRange(s_el.key, e_el.key)
@@ -98,6 +100,11 @@ class EventScheduler:
                 outlist.append(ran)
             s_el = e_el.next
 
+            if e_el == new_end:
+                break
+
+            while s_el != llist.last and s_el != new_end and s_el.accum > max_missing:
+                s_el = s_el.next
         return outlist
 
     def overlay_availability(self, event, avail):
