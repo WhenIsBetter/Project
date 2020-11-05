@@ -36,13 +36,6 @@ def busy_ptest_f(delay = 2.0, message = None):
 
 # ----
 
-@busy_ptest_f(delay=0.5)
-def testBot():
-    TOKEN = open("../../deploy/token.txt", "r").read()
-    bot = DiscordBot()
-    print(f"Logged in and ready to go!")
-    bot.run(TOKEN)
-
 @ptest
 def testTimeRange():
     # note to self: ALWAYS use datetime.datetime.today(), not datetime.date.today(). You'll use a date, not a datetime.

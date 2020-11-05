@@ -8,8 +8,6 @@ bot = DiscordBot()
 # Bind the on_message method to our fake channel
 fake_channel.add_callback(bot.on_message)
 
-
-
 # Test command for arguments in a command
 async def test_ping_pong_command(loop):
 
