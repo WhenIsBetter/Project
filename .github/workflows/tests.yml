@@ -1,8 +1,9 @@
 
 
 on:
-  pull_request:
-    branches: [ master ]
+  # pull_request:
+  #   branches: [ master ]
+  push
 
 jobs:
   check:
@@ -30,5 +31,4 @@ jobs:
 
       - name: Testing 123
         run: |
-          sys.exit(1)
-        shell: python
+          python src/main/test.py
