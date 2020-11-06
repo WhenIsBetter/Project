@@ -29,8 +29,8 @@ class DiscordBot:
         self.__commands = {}
 
         # TODO Register actual commands here, these are simply here to show the system in action, remove them later
-        self.register_command(PingPongCommand('ping', aliases=['pingpong', 'pongping']))
-        self.register_command(ArgsTestCommand('test'))
+        self.register_command(PingPongCommand(self, 'ping', aliases=['pingpong', 'pongping']))
+        self.register_command(ArgsTestCommand(self, 'test'))
 
     # Finish setting up the object with the scheduler
     def attach_scheduler(self, scheduler):
