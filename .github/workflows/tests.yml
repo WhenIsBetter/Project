@@ -31,5 +31,4 @@ jobs:
 
       - name: Testing 123
         run: |
-          sys.exit(1)
-        shell: python
+          python src/main/test.py
