@@ -22,3 +22,6 @@ for filename in glob.glob(os.path.join(TEST_DIR, '*.test.py')):
         print(f"\033 Test threw exception. \033[0m")
         traceback.print_exc()
     print("", flush=True)
+
+
+sys.exit(1)
