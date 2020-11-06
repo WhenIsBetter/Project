@@ -1,6 +1,7 @@
 import multiprocessing
 import traceback
 import time
+import sys
 
 from spm_bot.DiscordBot import DiscordBot
 
@@ -21,3 +22,5 @@ if __name__ == "__main__":
         p.join()
     except Exception:
         traceback.print_exc()
+        sys.exit(1)
+    sys.exit(0)

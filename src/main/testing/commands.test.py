@@ -39,7 +39,6 @@ async def test_args_test_command2(loop):
     print("Test successful!\n")
 
 
-
 if __name__ == "__main__":
     import asyncio
 
