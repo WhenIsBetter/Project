@@ -7,6 +7,7 @@ from discord import Message
 from commands.ArgsTestCommand import ArgsTestCommand
 from commands.PingPongCommand import PingPongCommand
 from commands.AbstractCommand import AbstractCommand
+from commands.CalendarTestCommand import CalendarTestCommand
 
 
 class DiscordBot:
@@ -28,6 +29,7 @@ class DiscordBot:
         # TODO Register actual commands here, these are simply here to show the system in action, remove them later
         self.register_command(PingPongCommand('ping', aliases=['pingpong', 'pongping']))
         self.register_command(ArgsTestCommand('test'))
+        self.register_command(CalendarTestCommand('calendartest', aliases=['calendar', 'testcalendar']))
 
     # Finish setting up the object with the scheduler
     def attach_scheduler(self, scheduler):
