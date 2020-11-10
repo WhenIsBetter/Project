@@ -28,7 +28,7 @@ returns: next 10 events upcoming in the users calendar
 '''
 def get_events(user):  # TODO move this command to another file, this file should be for auth only
     flow = InstalledAppFlow.from_client_secrets_file(
-        '../../../deploy/credentials.json', SCOPES, redirect_uri="urn:ietf:wg:oauth:2.0:oob")
+        '../../deploy/credentials.json', SCOPES, redirect_uri="urn:ietf:wg:oauth:2.0:oob")
     url, _ = flow.authorization_url()
     print("visit this url: {}".format(url))
     oauth_code = input("Paste your code here: ")

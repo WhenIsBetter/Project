@@ -1,9 +1,7 @@
 from discord import Message
 
-from commands.AbstractCommand import AbstractCommand
-
-
-from calendar.CalendarAPIAuth import get_events
+from src.main.calendar.CalendarAPIAuth import get_events
+from spm_bot.commands.AbstractCommand import AbstractCommand
 
 
 # simple command to test the functionality of the calendar API request
