@@ -16,9 +16,13 @@ for filename in glob.glob(os.path.join(TEST_DIR, '*.test.py')):
     print(greeting)
     print(banner + "\n")
 
+    try:
+        os.environ["PYTHONPATH"] = os.getcwd() + ":" + os.environ["PYTHONPATH"]
+    except KeyError:
+        os.environ["PYTHONPATH"] = os.getcwd()
+
     print("", flush=True)
     try:
-        os.system(f"export PYTHONPATH=$PWD:$PYTHONPATH")
         process = subprocess.Popen(["python3", filename])
         return_val = 1 if 0 != process.wait() else return_val
     except Exception:
