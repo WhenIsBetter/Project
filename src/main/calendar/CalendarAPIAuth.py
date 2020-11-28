@@ -1,8 +1,8 @@
 from pathlib import Path
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
-from _datetime import datetime, timedelta
-import datetime
+from pytz import utc
+from datetime import datetime, timedelta
 
 SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
 
@@ -22,11 +22,15 @@ def load_token(user): # TODO implement
 
 
 '''
-get events for a given user, if the user has no saved credentials in the database, prompt the user for their token
-and then save it to the database
+get events for a given user between start_date and end_date
+
+params:
+start_time, end_time: datetime date in ISO format
+user: discord user ID to request calendar events from
+
 returns: next 10 events upcoming in the users calendar
 '''
-def get_events(user):  # TODO move this command to another file, this file should be for auth only
+def get_events(user, start_date, end_date):
     flow = InstalledAppFlow.from_client_secrets_file(
         '../../deploy/credentials.json', SCOPES, redirect_uri="urn:ietf:wg:oauth:2.0:oob")
     url, _ = flow.authorization_url()
@@ -36,12 +40,14 @@ def get_events(user):  # TODO move this command to another file, this file shoul
     creds = flow.credentials
     service = build('calendar', 'v3', credentials=creds)
 
-    # Call the Calendar API
-    now = datetime.datetime.utcnow().isoformat() + 'Z' # 'Z' indicates UTC time
-    print('Getting the upcoming 10 events')
-    events_result = service.events().list(calendarId='primary', timeMin=now,
-                                        maxResults=10, singleEvents=True,
-                                        orderBy='startTime').execute()
+    # Call the Calendar API to get events between start_time and end_time
+    start_date = datetime.now(utc).isoformat('T')
+    end_date = (datetime.now(utc) + timedelta(days=5)).isoformat('T')
+    print("getting events between {} and {}".format(start_date, end_date))
+    events_result = service.events().list(calendarId='primary', timeMin=start_date,
+                                          timeMax=end_date,
+                                          singleEvents=True,
+                                          orderBy='startTime').execute()
     events = events_result.get('items', [])
 
     if not events:
