@@ -6,6 +6,15 @@ from datetime import datetime, timedelta
 
 SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
 
+
+'''
+direct message a user over discord to get their calendar api token and store token
+into database
+'''
+def authenticate_new_user(user):
+    pass
+
+
 '''
 save token into database so it can be loaded as needed
 '''
@@ -41,8 +50,6 @@ def get_events(user, start_date, end_date):
     service = build('calendar', 'v3', credentials=creds)
 
     # Call the Calendar API to get events between start_time and end_time
-    start_date = datetime.now(utc).isoformat('T')
-    end_date = (datetime.now(utc) + timedelta(days=5)).isoformat('T')
     print("getting events between {} and {}".format(start_date, end_date))
     events_result = service.events().list(calendarId='primary', timeMin=start_date,
                                           timeMax=end_date,
