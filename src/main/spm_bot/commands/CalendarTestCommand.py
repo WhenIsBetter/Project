@@ -1,6 +1,6 @@
 from discord import Message
 
-from src.main.calendar.CalendarAPIAuth import get_events, is_authenticated
+from src.main.calendar.CalendarAPIAuth import get_events, is_authenticated, get_authorization_url
 from spm_bot.commands.AbstractCommand import AbstractCommand
 from datetime import datetime, timedelta
 from pytz import utc
@@ -20,7 +20,10 @@ class CalendarTestCommand(AbstractCommand):
         if not is_authenticated(user):
             # get token from user over direct message
             user_dm_channel = await user.create_dm()
-            await user_dm_channel.send("test dm")
+            await user_dm_channel.send("you need to authenticate with google calendar "
+                                       "for this bot to be able to schedule events for you")
+            auth_url = get_authorization_url()
+            await user_dm_channel.send("visit this url: {}".format(auth_url[0]))
             pass
         else:
             get_events(user, start_date, end_date)

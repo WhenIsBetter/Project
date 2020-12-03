@@ -5,7 +5,8 @@ from pytz import utc
 from datetime import datetime, timedelta
 
 SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
-
+flow = InstalledAppFlow.from_client_secrets_file(
+        '../../deploy/credentials.json', SCOPES, redirect_uri="urn:ietf:wg:oauth:2.0:oob")
 
 '''
 direct message a user over discord to get their calendar api token and store token
@@ -39,6 +40,11 @@ def is_authenticated(user):
     return load_token(user) is not None
 
 
+# returns a string containing a url that a user can use to obtain their calendar token
+def get_authorization_url():
+    return flow.authorization_url()[0]
+
+
 '''
 get events for a given user between start_date and end_date
 
@@ -49,11 +55,7 @@ user: discord user ID to request calendar events from
 returns: next 10 events upcoming in the users calendar
 '''
 def get_events(user, start_date, end_date):
-    flow = InstalledAppFlow.from_client_secrets_file(
-        '../../deploy/credentials.json', SCOPES, redirect_uri="urn:ietf:wg:oauth:2.0:oob")
-    url, _ = flow.authorization_url()
-    print("visit this url: {}".format(url))
-    oauth_code = input("Paste your code here: ")
+    oauth_code = load_token(user)
     flow.fetch_token(code=oauth_code)
     creds = flow.credentials
     service = build('calendar', 'v3', credentials=creds)
