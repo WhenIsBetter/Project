@@ -8,13 +8,6 @@ SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
 flow = InstalledAppFlow.from_client_secrets_file(
         '../../deploy/credentials.json', SCOPES, redirect_uri="urn:ietf:wg:oauth:2.0:oob")
 
-'''
-direct message a user over discord to get their calendar api token and store token
-into database
-'''
-def authenticate_new_user(user):
-    pass
-
 
 '''
 save token into database so it can be loaded as needed
