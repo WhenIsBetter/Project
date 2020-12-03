@@ -24,10 +24,19 @@ def save_token(user, token): # TODO implement
 
 '''
 load token from database for a given discord user
-returns: calendar api credentials for the given user in plaintext BE CAREFUL WITH THIS
+returns: calendar api credentials for the given user in plaintext, returns None value if credentials are not found
 '''
 def load_token(user): # TODO implement
     pass
+
+
+'''
+check if user is authenticated
+returns a boolean value that is true if the user has a calendar api token already stored
+in the database, and false if the user does not have a token stored
+'''
+def is_authenticated(user):
+    return load_token(user) is not None
 
 
 '''
