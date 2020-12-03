@@ -48,8 +48,8 @@ user: discord user ID to request calendar events from
 returns: next 10 events upcoming in the users calendar
 '''
 def get_events(user, start_date, end_date):
-    oauth_code = load_token(user)
-    flow.fetch_token(code=oauth_code)
+    user_token = load_token(user)
+    flow.fetch_token(code=user_token)
     creds = flow.credentials
     service = build('calendar', 'v3', credentials=creds)
 
