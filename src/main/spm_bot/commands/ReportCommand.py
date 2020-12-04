@@ -51,11 +51,11 @@ class ReportCommand(AbstractCommand):
                 return
 
             try:
-                if args[2].contains("%"):
+                if "%" in args[2]:
                     percent = int(args[2].strip("%"))
                     allowed_missing = percent * invited
                 else:
-                    allowed_missing = int(args[2])
+                    allowed_missing = int(args[2]) + 1 # some1 tell me y we need +1 here
                 if allowed_missing < 0 or allowed_missing > invited:
                     raise ValueError()
             except ValueError:   # also catches if int() fails
@@ -74,14 +74,18 @@ class ReportCommand(AbstractCommand):
         missing = 1
         temp_times = self.bot.scheduler.calc_times(event, max_missing=1)
         while(True):
-            if temp_times != times:
+            if missing > invited or len(list(filter(
+                    lambda x: (x[0].start != x[1].start or x[0].end != x[1].end),
+                    zip(temp_times, times)))) > 0:
                 print_buffer += self.__convert_print(event, times, last_missing, missing)
                 if missing >= allowed_missing:
                     break
                 times = temp_times
+                last_missing = missing
             missing += 1
             temp_times = self.bot.scheduler.calc_times(event, max_missing=missing)
 
+        print_buffer += "### +-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-+ ###\n"
         await message.channel.send(print_buffer)
         return
 
@@ -92,9 +96,11 @@ class ReportCommand(AbstractCommand):
 
         range_text = f"{last_missing} to {missing - 1} people missing"
         if missing - last_missing == 1: # if it's <= 0 then something went drastically wrong
-            range_text = f"{last_missing} people missing"
+            range_text = f"up to {last_missing} people missing"
             if last_missing == 0:
                 range_text = f"everyone present"
+            elif last_missing == 1:
+                range_text = f"up to 1 person missing"
         buffer += f" # Available times with {range_text}:\n"
 
         if len(times) == 0:
@@ -110,9 +116,10 @@ class ReportCommand(AbstractCommand):
                 day_result += f" \t\t *  {times[i].start.strftime('%H:%M %p')} - {times[i].end.strftime('%H:%M %p')}"
                 if times[i].end.date() > times[i].start.date():
                     day_result += times[i].end.strftime(' %m/%d')   # do we need to worry about multiple years?
+                day_result += "\n"
                 i += 1 # ...nah... as long as the *gap* is under a year, and that's firmly out of our specs
             if day_result != "" or include_empty_days:
-                buffer += start_date.strftime(" \t - %a %d %b \n") + day_result + "\n"
+                buffer += start_date.strftime(" \t - %a %d %b \n") + day_result
             start_date += timedelta(days=1)
 
         buffer += "\n"
