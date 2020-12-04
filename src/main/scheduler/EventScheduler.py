@@ -108,9 +108,8 @@ class EventScheduler:
                 e_el = e_el.next
 
             ran = TimeRange(s_el.key, e_el.key)
-            if ran.size > min_time:
-                outlist.append(ran)
-                added_something = True
+            outlist.append(ran)
+            added_something = True
             s_el = e_el.next
 
             if e_el == new_end:
@@ -132,6 +131,9 @@ class EventScheduler:
                 last = outlist.pop(-1)
                 second_to_last = outlist[-1]
                 outlist[-1] = TimeRange(second_to_last.start, last.end)
+
+        # take out the ones that're too short
+        outlist = list(filter(lambda el: el.size >= min_time, outlist))
 
         return outlist
 

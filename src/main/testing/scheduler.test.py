@@ -1,5 +1,4 @@
-from spm_bot.DiscordBot import DiscordBot
-from lib import FakeChannel
+import sys
 import multiprocessing
 import time
 import traceback
@@ -10,10 +9,14 @@ from scheduler.TimeRange import TimeRange
 
 __tests = []
 
+global_fail = None
+
 # Convenience method for testing -- print colored error on disparity
 def expect(actual, expected):
     if actual != expected:
+        global global_fail
         print(f"\033[93m ERROR: Actual was >{actual}<, expected was >{expected}< \033[0m")
+        global_fail = 1
 
 # decorator -- attach to normal test functions
 def ptest(test, message = None):
@@ -21,7 +24,11 @@ def ptest(test, message = None):
         message  = test.__name__
     global __tests
     __tests.append([test, message])
-    return test
+    def wrapper():
+        global global_fail
+        global_fail = None
+        return test()
+    return wrapper
 
 # decorator factory -- call prior to a test function that wouldn't return on its own
 def busy_ptest_f(delay = 2.0, message = None):
@@ -37,13 +44,6 @@ def busy_ptest_f(delay = 2.0, message = None):
     return wrapper
 
 # ----
-
-@busy_ptest_f(delay=0.5)
-def testBot():
-    TOKEN = open("../../deploy/token.txt", "r").read()
-    bot = DiscordBot()
-    print(f"Logged in and ready to go!")
-    bot.run(TOKEN)
 
 @ptest
 def testTimeRange():
@@ -135,7 +135,7 @@ def testing_scenario1(a, b):
     now = datetime.datetime.today()
 
     def CD(hours):  # 'current date' -- convenience function here
-        return now + datetime.timedelta(hours=hours)
+        return datetime.datetime.utcfromtimestamp(0) + datetime.timedelta(hours=hours)
 
     ev = Event(CD(a), CD(b))
 
@@ -193,107 +193,100 @@ def overlay_availability_test():
 @ptest
 def overlay_availability_test_2():
 
+    print("Testing Basic Function")
+
+    expected = ["TimeRange(1970-01-01 03:00:00, 1970-01-01 04:00:00)",
+                "TimeRange(1970-01-01 09:00:00, 1970-01-01 10:00:00)"]
     (ev, ES, CD) = testing_scenario2(3, 10)
-    for result in ES.calc_times(ev):
-        print(str(result))
+    for i, result in enumerate(ES.calc_times(ev)):
+        expect(str(result), expected[i])
 
-    print("    ")
+    print("Testing wider range")
 
+    expected = ["TimeRange(1970-01-01 03:00:00, 1970-01-01 05:00:00)",
+                "TimeRange(1970-01-01 06:00:00, 1970-01-01 07:00:00)",
+                "TimeRange(1970-01-01 08:00:00, 1970-01-01 10:00:00)"]
     (ev, ES, CD) = testing_scenario2(3, 10)
-    for result in ES.calc_times(ev, max_missing=1):
-        print(str(result))
+    for i, result in enumerate(ES.calc_times(ev, max_missing=1)):
+        expect(str(result), expected[i])
 
-    print("    ")
+    print("Testing moved left boundary")
 
+    expected = ["TimeRange(1970-01-01 06:00:00, 1970-01-01 07:00:00)",
+                "TimeRange(1970-01-01 08:00:00, 1970-01-01 10:00:00)"]
     (ev, ES, CD) = testing_scenario2(6, 10)
-    for result in ES.calc_times(ev, max_missing=1):
-        print(str(result))
+    for i, result in enumerate(ES.calc_times(ev, max_missing=1)):
+        expect(str(result), expected[i])
 
-    print("    ")
+    print("Testing short #1")
 
+    expected = ["TimeRange(1970-01-01 02:00:00, 1970-01-01 05:00:00)"]
     (ev, ES, CD) = testing_scenario2(2, 5)
-    for result in ES.calc_times(ev, max_missing=1):
-        print(str(result))
+    for i, result in enumerate(ES.calc_times(ev, max_missing=1)):
+        expect(str(result), expected[i])
 
-    print("    ")
+    print("Testing short #2")
 
+    expected = ["TimeRange(1970-01-01 02:00:00, 1970-01-01 05:00:00)"]
     (ev, ES, CD) = testing_scenario2(2, 6)
-    for result in ES.calc_times(ev, max_missing=1):
-        print(str(result))
+    for i, result in enumerate(ES.calc_times(ev, max_missing=1)):
+        expect(str(result), expected[i])
 
-    print("    ")
+    print("Testing short #3")
 
+    expected = ["TimeRange(1970-01-01 02:00:00, 1970-01-01 04:00:00)"]
     (ev, ES, CD) = testing_scenario2(2, 4)
-    for result in ES.calc_times(ev, max_missing=1):
-        print(str(result))
+    for i, result in enumerate(ES.calc_times(ev, max_missing=1)):
+        expect(str(result), expected[i])
 
-    print("    ")
+    print("Testing empty")
 
     (ev, ES, CD) = testing_scenario2(5, 7)
-    for result in ES.calc_times(ev, max_missing=0):
-        print(str(result))
+    expect(ES.calc_times(ev, max_missing=0), [])
 
-# Create a fake discord text channel to use for relaying fake messages to the bot
-fake_channel = FakeChannel.FakeChannel()
-# Create the bot object but do not login
-bot = DiscordBot()
-# Bind the on_message method to our fake channel
-fake_channel.add_callback(bot.on_message)
+    print("Testing min_time no change")
 
+    expected = ["TimeRange(1970-01-01 03:00:00, 1970-01-01 05:00:00)",
+                "TimeRange(1970-01-01 06:00:00, 1970-01-01 07:00:00)",
+                "TimeRange(1970-01-01 08:00:00, 1970-01-01 10:00:00)"]
+    (ev, ES, CD) = testing_scenario2(3, 10)
+    for i, result in enumerate(ES.calc_times(ev, max_missing=1, min_time = datetime.timedelta(hours=1))):
+        expect(str(result), expected[i])
 
-# Test command for arguments in a command
-async def test_ping_pong_command(loop):
+    print("Testing min_time elim some")
 
-    print("Performing test for !ping command...")
-    # Trigger the bot to send a fake message back that says this: Pong!
-    await fake_channel.send("!ping")
-    # Make sure that the last message sent is the bot responding correctly
-    assert fake_channel.messages[-1] == "pong!"
-    print("Test successful!\n")
+    expected = ["TimeRange(1970-01-01 03:00:00, 1970-01-01 05:00:00)",
+                "TimeRange(1970-01-01 08:00:00, 1970-01-01 10:00:00)"]
+    (ev, ES, CD) = testing_scenario2(3, 10)
+    for i, result in enumerate(ES.calc_times(ev, max_missing=1, min_time = datetime.timedelta(hours=2))):
+        expect(str(result), expected[i])
 
-# Test command for arguments in a command
-async def test_args_test_command1(loop):
+    print("Testing min_time elim all")
 
-    print("Performing test for !test command with arguments...")
-    # Trigger the bot to send a fake message back that says this: [TESTING ENV] Your args were: ['akdl', 'falkd', 'f;alsd', 'f;lkasdf']
-    await fake_channel.send("!test akdl falkd f;alsd f;lkasdf")
-    # Make sure that the last message sent is the bot responding correctly
-    assert fake_channel.messages[-1] == "[TESTING ENV] Your args were: ['akdl', 'falkd', 'f;alsd', 'f;lkasdf']"
-    print("Test successful!\n")
+    (ev, ES, CD) = testing_scenario2(3, 10)
+    results = ES.calc_times(ev, max_missing=0, min_time = datetime.timedelta(hours=2, minutes=20))
+    expect(results, [])
 
-# Test command for arguments in a command
-async def test_args_test_command2(loop):
-
-    print("Performing test for !test command with no arguments...")
-    # Trigger the bot to send a fake message back that says this: [TESTING ENV] Your args were: []
-    await fake_channel.send("!test")
-    # Make sure that the last message sent is the bot responding correctly
-    assert fake_channel.messages[-1] == "[TESTING ENV] Your args were: []"
-    print("Test successful!\n")
 
 if __name__ == "__main__":
     import builtins as __builtin__
-    import asyncio
-
-    loop = asyncio.get_event_loop()
-
-    # Tests to run
-    loop.run_until_complete(test_ping_pong_command(loop))
-    loop.run_until_complete(test_args_test_command1(loop))
-    loop.run_until_complete(test_args_test_command2(loop))
-
-    loop.close()
 
     _print = __builtin__.print
     _replacement_print = lambda i: _print("\t" + str(i))
     __builtin__.print = _replacement_print
 
+    return_val = 0
+
     for f in __tests:
         _print(f"\n########################################\nStarting test: \"{f[1]}\"")
 
         try:
-            f[0]()
+            return_val = f[0]() or return_val
+            return_val = global_fail or return_val
         except Exception:
             __builtin__.print = _print
             traceback.print_exc()
             __builtin__.print = _replacement_print
+            return_val = 1
+
+    sys.exit(return_val)
