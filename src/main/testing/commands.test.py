@@ -66,6 +66,7 @@ async def test_args_test_command2(_):
     # Make sure that the last message sent is the bot responding correctly
     return expect('test_args_test_command2', fake_channel.messages[-1], "[TESTING ENV] Your args were: []")
 
+
 # Test command for creating an event, and retrieving it
 async def create_get_event_command(_):
 
@@ -80,6 +81,44 @@ async def create_get_event_command(_):
 
     return exists('create_get_event_command', 'event', event)
 
+# Test command for creating an event, and deleting it without confirming the deletion
+async def create_attempt_delete_event_command(_):
+
+    # Tell the bot to create an event at a certain time
+    await fake_channel.send('!event create 11/6/2020-8:00-PM 11/6/2020-10:00-PM')
+
+    # We have to get the id generated in the message, its surrounded by graves
+    start_index = fake_channel.messages[-1].find('`')
+    id = fake_channel.messages[-1][start_index+1:start_index+9]
+
+    # Make sure the event exists
+    if not await bot.database.get_event(id):
+        return exists('create_attempt_delete_event_command', 'bot.database.get_event(id)', await bot.database.get_event(id))
+
+    await fake_channel.send(f'!event delete {id}')
+
+    # Should still exist
+    return exists('create_attempt_delete_event_command', 'bot.database.get_event(id)', await bot.database.get_event(id))
+
+# Test command for creating an event, and deleting it
+async def create_delete_event_command(_):
+
+    # Tell the bot to create an event at a certain time
+    await fake_channel.send('!event create 11/6/2020-8:00-PM 11/6/2020-10:00-PM')
+
+    # We have to get the id generated in the message, its surrounded by graves
+    start_index = fake_channel.messages[-1].find('`')
+    id = fake_channel.messages[-1][start_index+1:start_index+9]
+
+    # Make sure the event exists
+    if not await bot.database.get_event(id):
+        return exists('create_delete_event_command', 'bot.database.get_event(id)', await bot.database.get_event(id))
+
+    await fake_channel.send(f'!event delete {id} CONFIRM')
+
+    # Should be none
+    return expect('create_delete_event_command', await bot.database.get_event(id), None)
+
 
 if __name__ == "__main__":
     import asyncio
@@ -91,7 +130,9 @@ if __name__ == "__main__":
         test_ping_pong_command,
         test_args_test_command1,
         test_args_test_command2,
-        create_get_event_command
+        create_get_event_command,
+        create_attempt_delete_event_command,
+        create_delete_event_command
     ]
 
     # Results of tests after they're ran, maps method -> boolean
