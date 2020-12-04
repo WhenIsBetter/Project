@@ -21,28 +21,7 @@ from spm_bot.commands.ReportCommand import ReportCommand
 class DiscordBot:
     #  -- Public: --
 
-    def __init__(self):
-        # Misc. initializations go here:
-        self.__scheduler = None   #   None
-
-        # Initialize variables related to the discord connection:
-        self.client = discord.Client()
-        self.on_message = self.client.event(self.on_message)  # register with explicit decorator call
-
-        # Initialize the database
-        self.__database = Database()
-
-        # Initialize things relating to commands, it will be a map that links a string identifier to a command instance
-        self.command_prefix = "!"  # What should a message start with to identify it as a command?
-        self.__commands = {}
-
-        # TODO Register actual commands here, these are simply here to show the system in action, remove them later
-        self.register_command(PingPongCommand(self, 'ping', aliases=['pingpong', 'pongping']))
-        self.register_command(ArgsTestCommand(self, 'test'))
-        self.register_command(EventAdminCommand(self, 'event'))
-
-        self.attach_scheduler(EventScheduler())
-        clark_kent = ReportCommand(self, 'report')
+    def __bad_testing(self):
         abcdEvent = Event(datetime.fromisoformat("2020-10-30 04:00"), datetime.fromisoformat("2020-10-30 05:30"))
         abcdEvent.attendees = [ None ]
         self.scheduler.add_event(abcdEvent)
@@ -62,12 +41,38 @@ class DiscordBot:
         self.scheduler.overlay_availability(longEvent, TimeRange(datetime.fromisoformat("2020-12-04 10:50"), datetime.fromisoformat("2020-12-04 11:25")))
         self.scheduler.overlay_availability(longEvent, TimeRange(datetime.fromisoformat("2020-12-04 10:50"), datetime.fromisoformat("2020-12-04 11:25")))
         self.scheduler.overlay_availability(longEvent, TimeRange(datetime.fromisoformat("2020-12-04 07:45"), datetime.fromisoformat("2020-12-04 08:30")))
-        clark_kent.fake_dict = {
+        fakefake = {
             'abcd': abcdEvent,
             '15': fiftEvent,
             'long': longEvent
         }
-        self.register_command(clark_kent)
+        return fakefake
+
+    def __init__(self):
+        # Misc. initializations go here:
+        self.__scheduler = None   #   None
+
+        # Initialize variables related to the discord connection:
+        self.client = discord.Client()
+        self.on_message = self.client.event(self.on_message)  # register with explicit decorator call
+
+        # Initialize the database
+        self.__database = Database()
+
+        # Initialize things relating to commands, it will be a map that links a string identifier to a command instance
+        self.command_prefix = "!"  # What should a message start with to identify it as a command?
+        self.__commands = {}
+
+        self.attach_scheduler(EventScheduler())
+
+        # TODO Register actual commands here, these are simply here to show the system in action, remove them later
+        self.register_command(PingPongCommand(self, 'ping', aliases=['pingpong', 'pongping']))
+        self.register_command(ArgsTestCommand(self, 'test'))
+        self.register_command(EventAdminCommand(self, 'event'))
+
+        report = ReportCommand(self, 'report')
+        report.fake_dict = self.__bad_testing()
+        self.register_command(report)
 
     # Finish setting up the object with the scheduler
     def attach_scheduler(self, scheduler):
