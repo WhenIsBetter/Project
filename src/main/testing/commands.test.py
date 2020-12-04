@@ -1,3 +1,4 @@
+from lib.FakeMessage import FakeAuthor
 from spm_bot.DiscordBot import DiscordBot
 from lib import FakeChannel
 
@@ -8,6 +9,9 @@ bot = DiscordBot(fake_database=True)
 # Bind the on_message method to our fake channel
 fake_channel.add_callback(bot.on_message)
 
+# Fake authors used for when we need to override permissions and stuff
+no_permission_author = FakeAuthor(administrator=False, manage_server=False)
+event_admin_author = FakeAuthor(administrator=True, manage_server=True)
 
 class Colors:
     BLUE = '\033[96m'
@@ -71,7 +75,7 @@ async def test_args_test_command2(_):
 async def create_get_event_command(_):
 
     # Tell the bot to create an event at a certain time
-    await fake_channel.send('!event create 11/6/2020-8:00-PM 11/6/2020-10:00-PM')
+    await fake_channel.send('!event create 11/6/2020-8:00-PM 11/6/2020-10:00-PM', author=event_admin_author)
 
     # We have to get the id generated in the message, its surrounded by graves
     start_index = fake_channel.messages[-1].find('`')
@@ -85,7 +89,7 @@ async def create_get_event_command(_):
 async def create_attempt_delete_event_command(_):
 
     # Tell the bot to create an event at a certain time
-    await fake_channel.send('!event create 11/6/2020-8:00-PM 11/6/2020-10:00-PM')
+    await fake_channel.send('!event create 11/6/2020-8:00-PM 11/6/2020-10:00-PM', author=event_admin_author)
 
     # We have to get the id generated in the message, its surrounded by graves
     start_index = fake_channel.messages[-1].find('`')
@@ -104,7 +108,7 @@ async def create_attempt_delete_event_command(_):
 async def create_delete_event_command(_):
 
     # Tell the bot to create an event at a certain time
-    await fake_channel.send('!event create 11/6/2020-8:00-PM 11/6/2020-10:00-PM')
+    await fake_channel.send('!event create 11/6/2020-8:00-PM 11/6/2020-10:00-PM', author=event_admin_author)
 
     # We have to get the id generated in the message, its surrounded by graves
     start_index = fake_channel.messages[-1].find('`')
@@ -114,10 +118,18 @@ async def create_delete_event_command(_):
     if not await bot.database.get_event(id):
         return exists('create_delete_event_command', 'bot.database.get_event(id)', await bot.database.get_event(id))
 
-    await fake_channel.send(f'!event delete {id} CONFIRM')
+    await fake_channel.send(f'!event delete {id} CONFIRM', author=event_admin_author)
 
     # Should be none
     return expect('create_delete_event_command', await bot.database.get_event(id), None)
+
+
+# Test command for making sure members w/o perms can't use the admin command
+async def permission_admin_event_command(_):
+
+    # Fake author without permissions
+    await fake_channel.send('!event', author=no_permission_author)
+    return expect('permission_admin_event_command', fake_channel.messages[-1], '[TESTING ENV] Only users with the `Event Admin` role can use this command!')
 
 
 if __name__ == "__main__":
@@ -132,7 +144,8 @@ if __name__ == "__main__":
         test_args_test_command2,
         create_get_event_command,
         create_attempt_delete_event_command,
-        create_delete_event_command
+        create_delete_event_command,
+        permission_admin_event_command
     ]
 
     # Results of tests after they're ran, maps method -> boolean
