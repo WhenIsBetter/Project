@@ -73,6 +73,13 @@ class Database:
         event.attendees = document['attendees']
         return event
 
+    # Pass in event id and a dictionary that contains keys to updated values to overwrite, for example, passing in a
+    # dict that only contains key 'start' which maps to a datetime object, we will update the event in the database
+    # by only replacing the new 'start' value while retaining all the old ones. Returns the new event object
+    async def update_event(self, id, updated_kvps: dict) -> Event:
+        await self._event_collection.update_one({'_id': id}, {'$set': updated_kvps})
+        return await self.get_event(id)
+
     # Deletes an event from the database given an event ID, returns the Event deleted if found
     async def delete_event(self, id):
 

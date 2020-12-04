@@ -22,7 +22,7 @@ class EventAdminCommand(AbstractCommand):
         # Just some user friendly stuff to spit back out when incorrect input is given
         self.base_usage = f"{self.bot.command_prefix}{self.name} < {self.create_arg} | {self.modify_arg} | {self.delete_arg} > [args...]"
         self.create_usage = f"{self.bot.command_prefix}{self.name} {self.create_arg} <start date> <end date>\n*Note: dates should be provided in the following format:*\n`MM/DD/YYYY-HH:MM-AM/PM`"
-        self.modify_usage = f"Not implemented yet!"
+        self.modify_usage = f"{self.bot.command_prefix}{self.name} {self.modify_arg} <event ID> <new start date> <new end date>\n*Note: dates should be provided in the following format:*\n`MM/DD/YYYY-HH:MM-AM/PM`"
         self.delete_usage = f"{self.bot.command_prefix}{self.name} {self.delete_arg} <event ID> [confirm]"
 
     # TODO: make role name a config option
@@ -41,7 +41,8 @@ class EventAdminCommand(AbstractCommand):
 
         # Only event admins can run this command
         if not self.is_event_admin(message.author):
-            await message.channel.send(f"{message.author.mention} Only users with the `Event Admin` role can use this command!")
+            await message.channel.send(
+                f"{message.author.mention} Only users with the `Event Admin` role can use this command!")
             return
 
         if not args:
@@ -62,7 +63,8 @@ class EventAdminCommand(AbstractCommand):
             await self._process_delete_subcommand(message, args)
 
     # Can throw FormatException if given incorrectly
-    async def parse_datetime(self, date_string: str) -> datetime:
+    @staticmethod
+    async def parse_datetime(date_string: str) -> datetime:
 
         date_time_split: list = date_string.split('-', maxsplit=1)
         # Needs to be split between date and the time itself
@@ -134,7 +136,8 @@ class EventAdminCommand(AbstractCommand):
             start_datetime = await self.parse_datetime(start_date)
             end_datetime = await self.parse_datetime(end_date)
         except DateFormatException:
-            await message.channel.send(f"{message.author.mention} Incorrect date format! {DateFormatException.ERROR_MESSAGE}")
+            await message.channel.send(
+                f"{message.author.mention} Incorrect date format! {DateFormatException.ERROR_MESSAGE}")
             return
 
         event = Event(start_datetime, end_datetime)
@@ -143,23 +146,54 @@ class EventAdminCommand(AbstractCommand):
         document = await self.bot.database.create_event(event)
 
         # TODO: make look pretty with embeds
-        await message.channel.send(f"{message.author.mention} Created the event in the database! You can refer to this event "
-                           f"by the ID: `{document['_id']}`\n[DEBUG] {start_datetime} --- {end_datetime}")
+        await message.channel.send(
+            f"{message.author.mention} Created the event in the database! You can refer to this event "
+            f"by the ID: `{document['_id']}`\n[DEBUG] {start_datetime} --- {end_datetime}")
 
     async def _process_modify_subcommand(self, message: Message, args: list):
-        await message.channel.send("Not implemented")
 
-    async def _process_delete_subcommand(self, message: Message, args: list):
-
-        if len(args) < 2:
-            await message.channel.send(f"{message.author.mention} Missing arguemnts! Usage: {self.delete_usage}")
+        if len(args) < 4:
+            await message.channel.send(f"{message.author.mention} Missing arguments! Usage: {self.modify_usage}")
             return
 
         id = args[1]
         event = await self.bot.database.get_event(id)
         if not event:
-            await message.channel.send(f"{message.author.mention} No event found with the ID `{id}`. Please verify the ID and "
-                               f"try again.")
+            await message.channel.send(
+                f"{message.author.mention} No event found with the ID `{id}`. Please verify the ID and "
+                f"try again.")
+            return
+
+        start_date = args[2]
+        end_date = args[3]
+
+        try:
+            start_datetime = await self.parse_datetime(start_date)
+            end_datetime = await self.parse_datetime(end_date)
+        except DateFormatException:
+            await message.channel.send(
+                f"{message.author.mention} Incorrect date format! {DateFormatException.ERROR_MESSAGE}")
+            return
+
+        # Update the event in the db
+        new_event = await self.bot.database.update_event(id, {'start': start_datetime,
+                                                    'end': end_datetime})
+
+        await message.channel.send(
+            f"{message.author.mention} Event `{id}` has been updated!\n[DEBUG] OLD: {event.start} --- {event.end}\nNEW: {new_event.start} --- {new_event.end}")
+
+    async def _process_delete_subcommand(self, message: Message, args: list):
+
+        if len(args) < 2:
+            await message.channel.send(f"{message.author.mention} Missing arguments! Usage: {self.delete_usage}")
+            return
+
+        id = args[1]
+        event = await self.bot.database.get_event(id)
+        if not event:
+            await message.channel.send(
+                f"{message.author.mention} No event found with the ID `{id}`. Please verify the ID and "
+                f"try again.")
             return
 
         try:
@@ -171,4 +205,5 @@ class EventAdminCommand(AbstractCommand):
             pass
 
         # TODO: again, make this look prettier with embeds
-        await message.channel.send(f"{message.author.mention} Are you sure you want to delete the event with the ID `{id}`?\n[DEBUG] {event.start} --- {event.end}\nPlease type `{self.bot.command_prefix}{self.name} {self.delete_arg} {id} CONFIRM` to proceed.")
+        await message.channel.send(
+            f"{message.author.mention} Are you sure you want to delete the event with the ID `{id}`?\n[DEBUG] {event.start} --- {event.end}\nPlease type `{self.bot.command_prefix}{self.name} {self.delete_arg} {id} CONFIRM` to proceed.")
