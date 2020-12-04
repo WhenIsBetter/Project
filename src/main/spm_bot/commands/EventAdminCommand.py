@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from discord import Message, Member
+from discord import Message, Member, Embed, Color
 
 from spm_bot.Event import Event
 from spm_bot.commands.AbstractCommand import AbstractCommand
@@ -24,6 +24,18 @@ class EventAdminCommand(AbstractCommand):
         self.create_usage = f"{self.bot.command_prefix}{self.name} {self.create_arg} <start date> <end date>\n*Note: dates should be provided in the following format:*\n`MM/DD/YYYY-HH:MM-AM/PM`"
         self.modify_usage = f"{self.bot.command_prefix}{self.name} {self.modify_arg} <event ID> <new start date> <new end date>\n*Note: dates should be provided in the following format:*\n`MM/DD/YYYY-HH:MM-AM/PM`"
         self.delete_usage = f"{self.bot.command_prefix}{self.name} {self.delete_arg} <event ID> [confirm]"
+
+    async def send_embed(self, channel, color=Color.green(), author=None, header=None, fields=None, footer=None):
+
+        if fields is None:
+            fields = [[]]
+        emb = Embed(title=header, color=color)
+        for field in fields:
+            assert len(field > 2)
+            emb.add_field(name=field[0], value=field[1], inline=field[2])
+        emb.set_author(name=author)
+        emb.set_footer(text=footer)
+        await channel.send(emb)
 
     # TODO: make role name a config option
     def is_event_admin(self, member: Member):
