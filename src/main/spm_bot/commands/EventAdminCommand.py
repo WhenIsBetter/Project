@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from discord import Message
+from discord import Message, Member
 
 from spm_bot.Event import Event
 from spm_bot.commands.AbstractCommand import AbstractCommand
@@ -25,7 +25,24 @@ class EventAdminCommand(AbstractCommand):
         self.modify_usage = f"Not implemented yet!"
         self.delete_usage = f"{self.bot.command_prefix}{self.name} {self.delete_arg} <event ID> [confirm]"
 
+    # TODO: make role name a config option
+    def is_event_admin(self, member: Member):
+
+        # First check if the member is a server admin, default to true if they are
+        if member.guild_permissions.administrator or member.guild_permissions.manage_guild:
+            return True
+
+        # Now check their roles
+        for role in member.roles:
+            if role.name.upper() == 'EVENT ADMIN':
+                return True
+
     async def execute(self, message: Message, args: list):
+
+        # Only event admins can run this command
+        if not self.is_event_admin(message.author):
+            await message.channel.send(f"{message.author.mention} Only users with the `Event Admin` role can use this command!")
+            return
 
         if not args:
             await message.channel.send(f"{message.author.mention} Missing arguments! Usage: {self.base_usage}")
