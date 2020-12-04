@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+
 import discord
 
 
@@ -5,10 +7,15 @@ import discord
 from discord import Message
 
 from database.Database import Database
+from spm_bot.Event import Event
+from scheduler.EventScheduler import EventScheduler
+from scheduler.TimeRange import TimeRange
+
 from spm_bot.commands.ArgsTestCommand import ArgsTestCommand
 from spm_bot.commands.EventAdminCommand import EventAdminCommand
 from spm_bot.commands.PingPongCommand import PingPongCommand
 from spm_bot.commands.AbstractCommand import AbstractCommand
+from spm_bot.commands.ReportCommand import ReportCommand
 
 
 class DiscordBot:
@@ -16,7 +23,7 @@ class DiscordBot:
 
     def __init__(self):
         # Misc. initializations go here:
-        self.__scheduler = None
+        self.__scheduler = None   #   None
 
         # Initialize variables related to the discord connection:
         self.client = discord.Client()
@@ -33,6 +40,25 @@ class DiscordBot:
         self.register_command(PingPongCommand(self, 'ping', aliases=['pingpong', 'pongping']))
         self.register_command(ArgsTestCommand(self, 'test'))
         self.register_command(EventAdminCommand(self, 'event'))
+
+        self.attach_scheduler(EventScheduler())
+        clark_kent = ReportCommand(self, 'report')
+        abcdEvent = Event(datetime.fromisoformat("2020-10-30 04:00"), datetime.fromisoformat("2020-10-30 05:30"))
+        self.scheduler.add_event(abcdEvent)
+        fiftEvent = Event(datetime.fromisoformat("2020-12-04 07:15"), datetime.fromisoformat("2020-12-04 11:45"))
+        min_time = timedelta(hours=1)
+        self.scheduler.add_event(fiftEvent)
+        self.scheduler.overlay_availability(fiftEvent, TimeRange(datetime.fromisoformat("2020-12-04 08:30"), datetime.fromisoformat("2020-12-04 10:30")))
+        self.scheduler.overlay_availability(fiftEvent, TimeRange(datetime.fromisoformat("2020-12-04 08:30"), datetime.fromisoformat("2020-12-04 10:30")))
+        self.scheduler.overlay_availability(fiftEvent, TimeRange(datetime.fromisoformat("2020-12-04 10:50"), datetime.fromisoformat("2020-12-04 11:25")))
+        self.scheduler.overlay_availability(fiftEvent, TimeRange(datetime.fromisoformat("2020-12-04 10:50"), datetime.fromisoformat("2020-12-04 11:25")))
+        self.scheduler.overlay_availability(fiftEvent, TimeRange(datetime.fromisoformat("2020-12-04 07:45"), datetime.fromisoformat("2020-12-04 09:00")))
+        longEvent = Event(datetime.fromisoformat("2020-12-10 11:00"), datetime.fromisoformat("2020-12-10 15:35"))
+        self.scheduler.add_event(longEvent)
+        clark_kent.fake_dict = {
+            'abcd': abcdEvent, '15': fiftEvent, 'long': longEvent
+        }
+        self.register_command(clark_kent)
 
     # Finish setting up the object with the scheduler
     def attach_scheduler(self, scheduler):

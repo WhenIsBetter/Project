@@ -14,3 +14,7 @@ class Event:
     def __init__(self, start, end):
         self.start = start
         self.end = end
+
+    @property
+    def size(self):
+        return self.end - self.start

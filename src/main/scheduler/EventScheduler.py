@@ -69,7 +69,7 @@ class EventScheduler:
         outlist = []
 
         if llist.empty():
-            return { [0]: TimeRange(event.start, event.end) }
+            return [TimeRange(event.start, event.end)]
 
         # The range we're actually looking between for the event
         new_start = llist.find_prev(event.start)
