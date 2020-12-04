@@ -9,6 +9,7 @@ class FakeAuthor:
     # are needed
     def __init__(self):
         self.mention = "[TESTING ENV]"
+        self.id = 1717660517
 
 
 # Our command framework forces discord.Message objects as parameters throughout the codebase
