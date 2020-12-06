@@ -4,7 +4,9 @@ import discord
 # Represents an instance of the bot for one specific server
 from discord import Message
 
+from database.Database import Database
 from spm_bot.commands.ArgsTestCommand import ArgsTestCommand
+from spm_bot.commands.EventAdminCommand import EventAdminCommand
 from spm_bot.commands.PingPongCommand import PingPongCommand
 from spm_bot.commands.CalendarTestCommand import CalendarTestCommand
 from spm_bot.commands.AbstractCommand import AbstractCommand
@@ -21,13 +23,17 @@ class DiscordBot:
         self.client = discord.Client()
         self.on_message = self.client.event(self.on_message)  # register with explicit decorator call
 
+        # Initialize the database
+        self.__database = Database()
+
         # Initialize things relating to commands, it will be a map that links a string identifier to a command instance
         self.command_prefix = "!"  # What should a message start with to identify it as a command?
         self.__commands = {}
 
         # TODO Register actual commands here, these are simply here to show the system in action, remove them later
-        self.register_command(PingPongCommand('ping', aliases=['pingpong', 'pongping']))
-        self.register_command(ArgsTestCommand('test'))
+        self.register_command(PingPongCommand(self, 'ping', aliases=['pingpong', 'pongping']))
+        self.register_command(ArgsTestCommand(self, 'test'))
+        self.register_command(EventAdminCommand(self, 'event'))
         self.register_command(CalendarTestCommand('calendar', aliases=['calendartest', 'testcalendar']))
 
     # Finish setting up the object with the scheduler
@@ -40,6 +46,10 @@ class DiscordBot:
         if self.__scheduler is None:
             raise RuntimeError('Uninitialized Scheduler')
         return self.__scheduler
+
+    @property
+    def database(self):
+        return self.__database
 
     # Return a list of DiscordUser objects -- from the UML diagram
     # FIXME: I've forgotten, why do we need this again?

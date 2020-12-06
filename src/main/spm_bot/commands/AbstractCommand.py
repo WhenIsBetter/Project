@@ -5,12 +5,14 @@ from discord import Message
 # instances that extend this class
 class AbstractCommand:
 
-    # All commands will use this constructor, where name is what a discord user would put after a command prefix and
-    # aliases are optional alternative ways to call the command in discord. i.e. if this command were to have a name
-    # of 'test', '!test' would cause the command to execute. If we added aliases of 't' and 'te' to a command
-    # instance, we could also call the command with '!t' and '!te'
-    def __init__(self, name: str, aliases=None):
+    # All commands will use this constructor, where bot is the DiscordBot object in charge of this command,
+    # name is what a discord user would put after a command prefix and aliases are optional alternative ways to call
+    # the command in discord. i.e. if this command were to have a name of 'test', '!test' would cause the command to
+    # execute. If we added aliases of 't' and 'te' to a command instance, we could also call the command with '!t'
+    # and '!te'
+    def __init__(self, bot, name: str, aliases=None):
 
+        self.bot = bot
         self.name = name
 
         # If a list wasn't supplied or weren't given a list, default to no aliases
