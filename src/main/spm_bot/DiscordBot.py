@@ -34,7 +34,7 @@ class DiscordBot:
         self.register_command(PingPongCommand(self, 'ping', aliases=['pingpong', 'pongping']))
         self.register_command(ArgsTestCommand(self, 'test'))
         self.register_command(EventAdminCommand(self, 'event'))
-        self.register_command(CalendarTestCommand('calendar', aliases=['calendartest', 'testcalendar']))
+        self.register_command(CalendarTestCommand(self, 'calendar', aliases=['calendartest', 'testcalendar']))
 
     # Finish setting up the object with the scheduler
     def attach_scheduler(self, scheduler):
