@@ -21,33 +21,6 @@ from spm_bot.commands.ReportCommand import ReportCommand
 class DiscordBot:
     #  -- Public: --
 
-    def __bad_testing(self):
-        abcdEvent = Event(datetime.fromisoformat("2020-10-30 04:00"), datetime.fromisoformat("2020-10-30 05:30"))
-        abcdEvent.attendees = [ None ]
-        self.scheduler.add_event(abcdEvent)
-        fiftEvent = Event(datetime.fromisoformat("2020-12-04 07:15"), datetime.fromisoformat("2020-12-04 11:45"))
-        fiftEvent.attendees = [ None, None, None ]
-        self.scheduler.add_event(fiftEvent)
-        self.scheduler.overlay_availability(fiftEvent, TimeRange(datetime.fromisoformat("2020-12-04 08:30"), datetime.fromisoformat("2020-12-04 10:30")))
-        self.scheduler.overlay_availability(fiftEvent, TimeRange(datetime.fromisoformat("2020-12-04 08:30"), datetime.fromisoformat("2020-12-04 10:30")))
-        self.scheduler.overlay_availability(fiftEvent, TimeRange(datetime.fromisoformat("2020-12-04 10:50"), datetime.fromisoformat("2020-12-04 11:25")))
-        self.scheduler.overlay_availability(fiftEvent, TimeRange(datetime.fromisoformat("2020-12-04 10:50"), datetime.fromisoformat("2020-12-04 11:25")))
-        self.scheduler.overlay_availability(fiftEvent, TimeRange(datetime.fromisoformat("2020-12-04 07:45"), datetime.fromisoformat("2020-12-04 09:00")))
-        longEvent = Event(datetime.fromisoformat("2020-12-04 07:15"), datetime.fromisoformat("2020-12-04 11:45")) # Event(datetime.fromisoformat("2020-12-10 11:00"), datetime.fromisoformat("2020-12-10 15:35"))
-        longEvent.attendees = [None, None, None, None]
-        self.scheduler.add_event(longEvent)
-        self.scheduler.overlay_availability(longEvent, TimeRange(datetime.fromisoformat("2020-12-04 08:30"), datetime.fromisoformat("2020-12-04 10:30")))
-        self.scheduler.overlay_availability(longEvent, TimeRange(datetime.fromisoformat("2020-12-04 08:30"), datetime.fromisoformat("2020-12-04 10:30")))
-        self.scheduler.overlay_availability(longEvent, TimeRange(datetime.fromisoformat("2020-12-04 10:50"), datetime.fromisoformat("2020-12-04 11:25")))
-        self.scheduler.overlay_availability(longEvent, TimeRange(datetime.fromisoformat("2020-12-04 10:50"), datetime.fromisoformat("2020-12-04 11:25")))
-        self.scheduler.overlay_availability(longEvent, TimeRange(datetime.fromisoformat("2020-12-04 07:45"), datetime.fromisoformat("2020-12-04 08:30")))
-        fakefake = {
-            'abcd': abcdEvent,
-            '15': fiftEvent,
-            'long': longEvent
-        }
-        return fakefake
-
     def __init__(self):
         # Misc. initializations go here:
         self.__scheduler = None   #   None
@@ -69,10 +42,7 @@ class DiscordBot:
         self.register_command(PingPongCommand(self, 'ping', aliases=['pingpong', 'pongping']))
         self.register_command(ArgsTestCommand(self, 'test'))
         self.register_command(EventAdminCommand(self, 'event'))
-
-        report = ReportCommand(self, 'report')
-        report.fake_dict = self.__bad_testing()
-        self.register_command(report)
+        self.register_command(ReportCommand(self, 'report'))
 
     # Finish setting up the object with the scheduler
     def attach_scheduler(self, scheduler):

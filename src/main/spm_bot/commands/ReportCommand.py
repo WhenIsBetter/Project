@@ -18,9 +18,12 @@ class ReportCommand(AbstractCommand):
         self.main_usage = f"{self.bot.command_prefix}{self.main_arg} <event ID> [missing (# or %)]"
         self.miss_usage = f"{self.missing_names[0]} <# or __% of people allowed to miss the event>"
 
-        self.args_complaint = f"Report command: Missing arguments! Usage: {self.main_usage}"
+        self.args_complaint = f"Report command: Bad arguments! Usage: {self.main_usage}"
         self.miss_complaint = f"Optional argument: Usage: {self.miss_usage}"
         self.numb_complaint = f"The number of people missing must be an integer between 0 and the number attending!"
+
+    async def __get_db_call(self, id_):
+        return await self.bot.database.get_event(id_)
 
     async def execute(self, message: Message, args: list):
 
@@ -31,10 +34,11 @@ class ReportCommand(AbstractCommand):
         id_ = args[0]
         event = None
         try:
-            event = self.fake_dict[id_]
+            # event = await self.bot.database.get_event(id_)
+            event = await self.__get_db_call(id_)
         except KeyError:
             event = None
-        # event = await self.bot.database.get_event(id_)
+
 
         if not event:
             await message.channel.send(
@@ -53,11 +57,12 @@ class ReportCommand(AbstractCommand):
             try:
                 if "%" in args[2]:
                     percent = int(args[2].strip("%"))
-                    allowed_missing = percent * invited
+                    allowed_missing = int(percent * invited)
                 else:
-                    allowed_missing = int(args[2]) + 1 # some1 tell me y we need +1 here
-                if allowed_missing < 0 or allowed_missing > invited:
+                    allowed_missing = int(args[2])
+                if allowed_missing < 0 or allowed_missing >= invited:
                     raise ValueError()
+                allowed_missing += 1 # some1 tell me y we need +1 here
             except ValueError:   # also catches if int() fails
                 await message.channel.send(self.numb_complaint)
                 return
