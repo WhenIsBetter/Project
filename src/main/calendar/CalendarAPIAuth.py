@@ -16,6 +16,8 @@ def save_auth_code(user, auth_code):  # TODO implement
           "user: {}\n"
           "code: {}\n"
           "-----".format(user, auth_code))
+
+    # TODO store user and code into database here
     pass
 
 
@@ -24,6 +26,7 @@ load authentication code from database for a given discord user
 returns: calendar api credentials for the given user in plaintext, returns None value if credentials are not found
 '''
 def load_auth_code(user):  # TODO implement
+    # TODO read and return the code linked with the given user
     pass
 
 
