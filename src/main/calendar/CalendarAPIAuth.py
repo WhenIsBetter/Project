@@ -1,18 +1,21 @@
-from pathlib import Path
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
-from pytz import utc
-from datetime import datetime, timedelta
+
 
 SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
 flow = InstalledAppFlow.from_client_secrets_file(
-        '../../deploy/credentials.json', SCOPES, redirect_uri="urn:ietf:wg:oauth:2.0:oob")
-
+    '../../deploy/credentials.json', SCOPES, redirect_uri="urn:ietf:wg:oauth:2.0:oob")
 
 '''
 save authentication code into database so it can be loaded as needed
 '''
-def save_auth_code(user, auth_code): # TODO implement
+def save_auth_code(user, auth_code):  # TODO implement
+    # temporary print to test that the method runs correctly
+    print("-----\n"
+          "save_auth_code received code\n"
+          "user: {}\n"
+          "code: {}\n"
+          "-----".format(user, auth_code))
     pass
 
 
@@ -20,7 +23,7 @@ def save_auth_code(user, auth_code): # TODO implement
 load authentication code from database for a given discord user
 returns: calendar api credentials for the given user in plaintext, returns None value if credentials are not found
 '''
-def load_auth_code(user): # TODO implement
+def load_auth_code(user):  # TODO implement
     pass
 
 

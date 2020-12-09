@@ -1,8 +1,10 @@
 import discord
 
-
 # Represents an instance of the bot for one specific server
 from discord import Message, DMChannel
+
+# pycharm could not find the calendar package for some reason so it had to be imported this way
+from src.main.calendar.CalendarAPIAuth import save_auth_code
 
 from database.Database import Database
 from spm_bot.commands.ArgsTestCommand import ArgsTestCommand
@@ -102,10 +104,13 @@ class DiscordBot:
     # Internal function, taking a discord message object,
     #  that handles the contents of a direct message to the bot
     async def _parse_dm(self, message: Message):
-        # TODO check if dm is an auth_code and store in database and remove the testing prints below
+        # TODO check if dm is an auth code, we currently are assuming any dm's sent to the bot are auth codes
+        save_auth_code(message.author, message.content)  # store token in database
 
-        # TEMPORARY, this code is just used to verify that this method works
+        # TEMPORARY, this reply is just used to verify that this method works
         await message.channel.send("--dm read--\nauthor: {}\ncontent: {}".format(message.author, message.content))
+
+
 
     # Internal function, taking a discord message object,
     #  that delegates command responses to an appropriate method
