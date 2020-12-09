@@ -70,6 +70,13 @@ class Database:
         await self.__token_collection.insert_one(document)
         return document
 
+    # Retrieves calendar creds stored in the database given a discord_id, if no creds exist, returns None
+    async def get_calendar_creds(self, discord_user_id):
+        document = await self.__token_collection.find_one({'discord_id': discord_user_id})
+        if not document:
+            return None
+        return document['discord_id']
+
     # Retrieves an event stored in the database given an event ID, if event with ID doesn't exist, returns None
     async def get_event(self, id) -> Event:
 
