@@ -2,7 +2,7 @@ import discord
 
 
 # Represents an instance of the bot for one specific server
-from discord import Message
+from discord import Message, DMChannel
 
 from database.Database import Database
 from spm_bot.commands.ArgsTestCommand import ArgsTestCommand
@@ -90,9 +90,22 @@ class DiscordBot:
     #  and, if so, pass to _parse_command to check and delegate if so
     async def on_message(self, message: Message):
 
+        # Is the message a direct message? If so pass it on to _parse_dm, also verify that the bot is not parsing
+        # it's own messages so we don't infinite loop
+        if isinstance(message.channel, DMChannel) and message.author.id != self.client.user.id:
+            await self._parse_dm(message)
+
         # Does the message start with our prefix? If so parse it and handle it
         if message.content.startswith(self.command_prefix):
             await self._parse_command(message)
+
+    # Internal function, taking a discord message object,
+    #  that handles the contents of a direct message to the bot
+    async def _parse_dm(self, message: Message):
+        # TODO check if dm is an auth_code and store in database and remove the testing prints below
+
+        # TEMPORARY, this code is just used to verify that this method works
+        await message.channel.send("--dm read--\nauthor: {}\ncontent: {}".format(message.author, message.content))
 
     # Internal function, taking a discord message object,
     #  that delegates command responses to an appropriate method
