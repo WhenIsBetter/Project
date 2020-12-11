@@ -135,7 +135,7 @@ def testing_scenario1(a, b):
     now = datetime.datetime.today()
 
     def CD(hours):  # 'current date' -- convenience function here
-        return now + datetime.timedelta(hours=hours)
+        return datetime.datetime.utcfromtimestamp(0) + datetime.timedelta(hours=hours)
 
     ev = Event(CD(a), CD(b))
 
@@ -193,45 +193,79 @@ def overlay_availability_test():
 @ptest
 def overlay_availability_test_2():
 
+    print("Testing Basic Function")
+
+    expected = ["TimeRange(1970-01-01 03:00:00, 1970-01-01 04:00:00)",
+                "TimeRange(1970-01-01 09:00:00, 1970-01-01 10:00:00)"]
     (ev, ES, CD) = testing_scenario2(3, 10)
-    for result in ES.calc_times(ev):
-        print(str(result))
+    for i, result in enumerate(ES.calc_times(ev)):
+        expect(str(result), expected[i])
 
-    print("    ")
+    print("Testing wider range")
 
+    expected = ["TimeRange(1970-01-01 03:00:00, 1970-01-01 05:00:00)",
+                "TimeRange(1970-01-01 06:00:00, 1970-01-01 07:00:00)",
+                "TimeRange(1970-01-01 08:00:00, 1970-01-01 10:00:00)"]
     (ev, ES, CD) = testing_scenario2(3, 10)
-    for result in ES.calc_times(ev, max_missing=1):
-        print(str(result))
+    for i, result in enumerate(ES.calc_times(ev, max_missing=1)):
+        expect(str(result), expected[i])
 
-    print("    ")
+    print("Testing moved left boundary")
 
+    expected = ["TimeRange(1970-01-01 06:00:00, 1970-01-01 07:00:00)",
+                "TimeRange(1970-01-01 08:00:00, 1970-01-01 10:00:00)"]
     (ev, ES, CD) = testing_scenario2(6, 10)
-    for result in ES.calc_times(ev, max_missing=1):
-        print(str(result))
+    for i, result in enumerate(ES.calc_times(ev, max_missing=1)):
+        expect(str(result), expected[i])
 
-    print("    ")
+    print("Testing short #1")
 
+    expected = ["TimeRange(1970-01-01 02:00:00, 1970-01-01 05:00:00)"]
     (ev, ES, CD) = testing_scenario2(2, 5)
-    for result in ES.calc_times(ev, max_missing=1):
-        print(str(result))
+    for i, result in enumerate(ES.calc_times(ev, max_missing=1)):
+        expect(str(result), expected[i])
 
-    print("    ")
+    print("Testing short #2")
 
+    expected = ["TimeRange(1970-01-01 02:00:00, 1970-01-01 05:00:00)"]
     (ev, ES, CD) = testing_scenario2(2, 6)
-    for result in ES.calc_times(ev, max_missing=1):
-        print(str(result))
+    for i, result in enumerate(ES.calc_times(ev, max_missing=1)):
+        expect(str(result), expected[i])
 
-    print("    ")
+    print("Testing short #3")
 
+    expected = ["TimeRange(1970-01-01 02:00:00, 1970-01-01 04:00:00)"]
     (ev, ES, CD) = testing_scenario2(2, 4)
-    for result in ES.calc_times(ev, max_missing=1):
-        print(str(result))
+    for i, result in enumerate(ES.calc_times(ev, max_missing=1)):
+        expect(str(result), expected[i])
 
-    print("    ")
+    print("Testing empty")
 
     (ev, ES, CD) = testing_scenario2(5, 7)
-    for result in ES.calc_times(ev, max_missing=0):
-        print(str(result))
+    expect(ES.calc_times(ev, max_missing=0), [])
+
+    print("Testing min_time no change")
+
+    expected = ["TimeRange(1970-01-01 03:00:00, 1970-01-01 05:00:00)",
+                "TimeRange(1970-01-01 06:00:00, 1970-01-01 07:00:00)",
+                "TimeRange(1970-01-01 08:00:00, 1970-01-01 10:00:00)"]
+    (ev, ES, CD) = testing_scenario2(3, 10)
+    for i, result in enumerate(ES.calc_times(ev, max_missing=1, min_time = datetime.timedelta(hours=1))):
+        expect(str(result), expected[i])
+
+    print("Testing min_time elim some")
+
+    expected = ["TimeRange(1970-01-01 03:00:00, 1970-01-01 05:00:00)",
+                "TimeRange(1970-01-01 08:00:00, 1970-01-01 10:00:00)"]
+    (ev, ES, CD) = testing_scenario2(3, 10)
+    for i, result in enumerate(ES.calc_times(ev, max_missing=1, min_time = datetime.timedelta(hours=2))):
+        expect(str(result), expected[i])
+
+    print("Testing min_time elim all")
+
+    (ev, ES, CD) = testing_scenario2(3, 10)
+    results = ES.calc_times(ev, max_missing=0, min_time = datetime.timedelta(hours=2, minutes=20))
+    expect(results, [])
 
 
 if __name__ == "__main__":

@@ -1,39 +1,53 @@
+from datetime import datetime, timedelta
+
 import discord
+
 
 # Represents an instance of the bot for one specific server
 from discord import Message, DMChannel
 
 from database.Database import Database
+from spm_bot.Event import Event
+from scheduler.EventScheduler import EventScheduler
+from scheduler.TimeRange import TimeRange
+from database.MockDatabase import MockDatabase
 from spm_bot.commands.ArgsTestCommand import ArgsTestCommand
 from spm_bot.commands.EventAdminCommand import EventAdminCommand
 from spm_bot.commands.PingPongCommand import PingPongCommand
 from spm_bot.commands.CalendarTestCommand import CalendarTestCommand
 from spm_bot.commands.AbstractCommand import AbstractCommand
+from spm_bot.commands.ReportCommand import ReportCommand
 
 
 class DiscordBot:
     #  -- Public: --
 
-    def __init__(self):
+    def __init__(self, fake_database=False):
         # Misc. initializations go here:
-        self.__scheduler = None
+        self.__scheduler = None   #   None
 
         # Initialize variables related to the discord connection:
         self.client = discord.Client()
         self.on_message = self.client.event(self.on_message)  # register with explicit decorator call
 
-        # Initialize the database
-        self.__database = Database()
+        # Initialize the database, fake_database param is used in tests, can also use while implementing features
+        if fake_database:
+            self.__database = MockDatabase()
+        else:
+            self.__database = Database()
 
         # Initialize things relating to commands, it will be a map that links a string identifier to a command instance
         self.command_prefix = "!"  # What should a message start with to identify it as a command?
         self.__commands = {}
+
+        self.attach_scheduler(EventScheduler())
 
         # TODO Register actual commands here, these are simply here to show the system in action, remove them later
         self.register_command(PingPongCommand(self, 'ping', aliases=['pingpong', 'pongping']))
         self.register_command(ArgsTestCommand(self, 'test'))
         self.register_command(EventAdminCommand(self, 'event'))
         self.register_command(CalendarTestCommand(self, 'calendar', aliases=['calendartest', 'testcalendar']))
+        self.register_command(ReportCommand(self, 'report'))
 
     # Finish setting up the object with the scheduler
     def attach_scheduler(self, scheduler):
