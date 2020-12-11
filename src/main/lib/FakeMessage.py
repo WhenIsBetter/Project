@@ -1,7 +1,11 @@
 from discord import Message
 import datetime
 
+
 # Since the bot uses an author object for debug purposes, we need something that the bot can read attributes from
+from lib.FakeGuild import FakeGuild
+
+
 class FakeAuthor:
 
 
@@ -20,6 +24,7 @@ class FakeAuthor:
         self.id = 1717660517
         self.guild_permissions = GuildPermissions(administrator, manage_server)
         self.roles = []
+        self.guild = FakeGuild.instance()
 
 
 # Our command framework forces discord.Message objects as parameters throughout the codebase
@@ -39,6 +44,8 @@ class FakeMessage(Message):
             self.author = author
         else:
             self.author = FakeAuthor()
+
+        self.guild = FakeGuild.instance()
 
     def __repr__(self):
         return f"[Fake Message](content={self.content}, embed? {self.embeds is not []})"
