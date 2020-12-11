@@ -1,42 +1,35 @@
-# Mongo databases are essentially just a way to persistently store python dictionaries when using the python driver.
-# Since we are using an asynchronous discord bot, we are going to use the asynchronous mongo driver known as 'motor'
-# It functions exactly the same as mongo, meaning you can still use the documentation provided by mongo to interact with
-# the database but any functions that are called that interact with the database need to be async/awaited.
 import random
 import string
 
-from motor import motor_asyncio
+import mongomock
 
+from database import Database
 from spm_bot.Event import Event
 
-# TODO: maybe move this to a config later down the road, if someone were to deploy this and have an external db running
-#       non-locally it would make deployment way easier
-DATABASE_URL = "localhost"
-DATABASE_PORT = 27017
 
-UNIQUE_ID_LENGTH = 8  # How long should we make our unique IDs for events?
+# A fake database used for automated tests.
+class MockDatabase(Database.Database):
 
-
-# We will attach this Database class to our discord bot
-class Database:
-
+    # Need to override to mock client instead of our actual databases
     def __init__(self):
 
         # The client in charge of the cluster of databases
-        self._database_cluster_client = motor_asyncio.AsyncIOMotorClient(DATABASE_URL, DATABASE_PORT)
+        self._database_cluster_client = mongomock.MongoClient()
         # The database specifically tailored for our discord bot
-        self._discord_bot_database = self._database_cluster_client['discord']
+        self._discord_bot_database = self._database_cluster_client.db
         # In this database that we just accessed, we can now use 'collections' which are like folders
         # These 'folders' contain mongo 'documents' which are basically json files that easily translate to
         # Python dictionaries
-        self._event_collection = self._discord_bot_database['events']
+        self._event_collection = self._discord_bot_database.collection
+
+    # Since this library isn't async but our bot relies on an async database, we have to override these methods sigh
 
     async def generate_unique_id(self):
 
-        random_id = ''.join([random.choice(string.ascii_uppercase + string.digits) for _ in range(UNIQUE_ID_LENGTH)])
+        random_id = ''.join([random.choice(string.ascii_uppercase + string.digits) for _ in range(Database.UNIQUE_ID_LENGTH)])
 
         # Is there already a document with this ID? If so, try again
-        if await self._event_collection.find_one({'_id': random_id}):
+        if self._event_collection.find_one({'_id': random_id}):
             return await self.generate_unique_id()
 
         # Sweet, it's a unique ID
@@ -55,14 +48,14 @@ class Database:
         }
 
         # Insert the document to the database and return it if we need further processing where this was called
-        await self._event_collection.insert_one(document)
+        self._event_collection.insert_one(document)
         return document
 
     # Retrieves an event stored in the database given an event ID, if event with ID doesn't exist, returns None
     async def get_event(self, id) -> Event:
 
         # Find the document with the ID
-        document = await self._event_collection.find_one({'_id': id})
+        document = self._event_collection.find_one({'_id': id})
         # Possible that document doesn't exist
         if not document:
             return None
@@ -77,7 +70,7 @@ class Database:
     # dict that only contains key 'start' which maps to a datetime object, we will update the event in the database
     # by only replacing the new 'start' value while retaining all the old ones. Returns the new event object
     async def update_event(self, id, updated_kvps: dict) -> Event:
-        await self._event_collection.update_one({'_id': id}, {'$set': updated_kvps})
+        self._event_collection.update_one({'_id': id}, {'$set': updated_kvps})
         return await self.get_event(id)
 
     # Deletes an event from the database given an event ID, returns the Event deleted if found
@@ -87,5 +80,5 @@ class Database:
         if not event:
             return None
 
-        await self._event_collection.delete_one({'_id': id})
+        self._event_collection.delete_one({'_id': id})
         return event
