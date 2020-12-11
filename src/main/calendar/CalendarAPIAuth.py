@@ -36,7 +36,7 @@ async def get_events(discord_user_id, start_date, end_date):
     service = build('calendar', 'v3', credentials=creds)
 
     # Call the Calendar API to get events between start_time and end_time
-    print("getting events between {} and {}".format(start_date, end_date))
+    # print("getting events between {} and {}".format(start_date, end_date))
     events_result = service.events().list(calendarId='primary', timeMin=start_date,
                                           timeMax=end_date,
                                           singleEvents=True,

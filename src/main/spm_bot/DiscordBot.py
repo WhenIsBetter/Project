@@ -105,7 +105,7 @@ class DiscordBot:
         await self.save_auth_code(message.author.id, message.content)  # store token in database
 
         # TEMPORARY, this reply is just used to verify that this method works
-        await message.channel.send("--dm read--\nauthor: {}\ncontent: {}".format(message.author.id, message.content))
+        # await message.channel.send("--dm read--\nauthor: {}\ncontent: {}".format(message.author.id, message.content))
 
 
 
@@ -132,11 +132,11 @@ class DiscordBot:
     # save authentication code into database so it can be loaded as needed
     async def save_auth_code(self, discord_user_id, auth_code):  # TODO implement
         # temporary print to test that the method runs correctly
-        print("-----\n"
-            "save_auth_code received code\n"
-            "user id: {}\n"
-            "code: {}\n"
-            "-----".format(discord_user_id, auth_code))
+        # print("-----\n"
+        #    "save_auth_code received code\n"
+        #    "user id: {}\n"
+        #    "code: {}\n"
+        #    "-----".format(discord_user_id, auth_code))
         await self.__database.add_calendar_creds(discord_user_id, auth_code)
 
         pass
@@ -145,7 +145,7 @@ class DiscordBot:
     # returns: calendarapi credentials for user in plaintext, returns None value if credentials are not found
     async def load_auth_code(self, discord_user_id):  # TODO implement
         auth_code = await Database().get_calendar_creds(discord_user_id)
-        print("auth code loaded for user {}\ncode: {}".format(discord_user_id, auth_code))
+        # print("auth code loaded for user {}\ncode: {}".format(discord_user_id, auth_code))
         return auth_code
 
 
