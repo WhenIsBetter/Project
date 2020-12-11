@@ -1,42 +1,19 @@
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
-
+from spm_bot.DiscordBot import DiscordBot
 
 SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
 flow = InstalledAppFlow.from_client_secrets_file(
     '../../deploy/credentials.json', SCOPES, redirect_uri="urn:ietf:wg:oauth:2.0:oob")
 
-'''
-save authentication code into database so it can be loaded as needed
-'''
-def save_auth_code(user, auth_code):  # TODO implement
-    # temporary print to test that the method runs correctly
-    print("-----\n"
-          "save_auth_code received code\n"
-          "user: {}\n"
-          "code: {}\n"
-          "-----".format(user, auth_code))
-
-    # TODO store user and code into database here
-    pass
-
-
-'''
-load authentication code from database for a given discord user
-returns: calendar api credentials for the given user in plaintext, returns None value if credentials are not found
-'''
-def load_auth_code(user):  # TODO implement
-    # TODO read and return the code linked with the given user
-    pass
-
-
+bot = DiscordBot()
 '''
 check if user is authenticated
 returns a boolean value that is true if the user has an authentication code already stored
 in the database, and false if the user does not have an authentication code stored
 '''
-def is_authenticated(user):
-    return load_auth_code(user) is not None
+async def is_authenticated(discord_user_id):
+    return await DiscordBot.load_auth_code(bot, discord_user_id) is not None
 
 
 # returns a string containing a url that a user uses to obtain their authorization code
@@ -49,12 +26,12 @@ get events for a given user between start_date and end_date
 
 params:
 start_time, end_time: datetime date in ISO format
-user: discord user ID to request calendar events from
+discord_user_id: discord user ID to request calendar events from
 
 returns: next 10 events upcoming in the users calendar
 '''
-def get_events(user, start_date, end_date):
-    flow.fetch_token(code=load_auth_code(user))  # update flow with the users credentials so it can create a token
+async def get_events(discord_user_id, start_date, end_date):
+    flow.fetch_token(code=await DiscordBot.load_auth_code(bot, discord_user_id))  # update flow with the users credentials so it can create a token
     creds = flow.credentials  # create credentials for the current user
     service = build('calendar', 'v3', credentials=creds)
 

@@ -3,9 +3,6 @@ import discord
 # Represents an instance of the bot for one specific server
 from discord import Message, DMChannel
 
-# pycharm could not find the calendar package for some reason so it had to be imported this way
-from src.main.calendar.CalendarAPIAuth import save_auth_code
-
 from database.Database import Database
 from spm_bot.commands.ArgsTestCommand import ArgsTestCommand
 from spm_bot.commands.EventAdminCommand import EventAdminCommand
@@ -105,10 +102,10 @@ class DiscordBot:
     #  that handles the contents of a direct message to the bot
     async def _parse_dm(self, message: Message):
         # TODO check if dm is an auth code, we currently are assuming any dm's sent to the bot are auth codes
-        save_auth_code(message.author, message.content)  # store token in database
+        await self.save_auth_code(message.author.id, message.content)  # store token in database
 
         # TEMPORARY, this reply is just used to verify that this method works
-        await message.channel.send("--dm read--\nauthor: {}\ncontent: {}".format(message.author, message.content))
+        await message.channel.send("--dm read--\nauthor: {}\ncontent: {}".format(message.author.id, message.content))
 
 
 
@@ -131,6 +128,25 @@ class DiscordBot:
         # provided without args, we will have an empty list.
         print(f"[Commands] ({message.created_at}) {message.author} used command: '{command_instance.get_name()}'")
         await command_instance.execute(message, split_message[1:])
+
+    # save authentication code into database so it can be loaded as needed
+    async def save_auth_code(self, discord_user_id, auth_code):  # TODO implement
+        # temporary print to test that the method runs correctly
+        print("-----\n"
+            "save_auth_code received code\n"
+            "user id: {}\n"
+            "code: {}\n"
+            "-----".format(discord_user_id, auth_code))
+        await self.__database.add_calendar_creds(discord_user_id, auth_code)
+
+        pass
+
+    # load authentication code from database for a given discord user id
+    # returns: calendarapi credentials for user in plaintext, returns None value if credentials are not found
+    async def load_auth_code(self, discord_user_id):  # TODO implement
+        auth_code = await Database().get_calendar_creds(discord_user_id)
+        print("auth code loaded for user {}\ncode: {}".format(discord_user_id, auth_code))
+        return auth_code
 
 
     # TODO

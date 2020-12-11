@@ -75,7 +75,7 @@ class Database:
         document = await self.__token_collection.find_one({'discord_id': discord_user_id})
         if not document:
             return None
-        return document['discord_id']
+        return document['auth_code']
 
     # Retrieves an event stored in the database given an event ID, if event with ID doesn't exist, returns None
     async def get_event(self, id) -> Event:
