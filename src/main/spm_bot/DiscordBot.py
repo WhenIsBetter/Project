@@ -161,7 +161,7 @@ class DiscordBot:
     # load authentication code from database for a given discord user id
     # returns: calendarapi credentials for user in plaintext, returns None value if credentials are not found
     async def load_auth_code(self, discord_user_id):  # TODO implement
-        auth_code = await Database().get_calendar_creds(discord_user_id)
+        auth_code = await self.__database.get_calendar_creds(discord_user_id)
         # print("auth code loaded for user {}\ncode: {}".format(discord_user_id, auth_code))
         return auth_code
 
