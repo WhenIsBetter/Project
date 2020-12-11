@@ -30,6 +30,7 @@ class Database:
         # These 'folders' contain mongo 'documents' which are basically json files that easily translate to
         # Python dictionaries
         self._event_collection = self._discord_bot_database['events']
+        self._token_collection = self._discord_bot_database['tokens']
 
     async def generate_unique_id(self):
 
@@ -57,6 +58,24 @@ class Database:
         # Insert the document to the database and return it if we need further processing where this was called
         await self._event_collection.insert_one(document)
         return document
+
+    # Add a discord users calendar api auth code to the database and return it if we need it for further processing or
+    # testing
+    async def add_calendar_creds(self, discord_user_id, auth_code):
+        document = {
+            'discord_id': discord_user_id,
+            'auth_code': auth_code
+        }
+
+        await self._token_collection.insert_one(document)
+        return document
+
+    # Retrieves calendar creds stored in the database given a discord_id, if no creds exist, returns None
+    async def get_calendar_creds(self, discord_user_id):
+        document = await self._token_collection.find_one({'discord_id': discord_user_id})
+        if not document:
+            return None
+        return document['auth_code']
 
     # Retrieves an event stored in the database given an event ID, if event with ID doesn't exist, returns None
     async def get_event(self, id) -> Event:
