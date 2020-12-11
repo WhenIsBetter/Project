@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+
 import discord
 
 
@@ -5,11 +7,15 @@ import discord
 from discord import Message
 
 from database.Database import Database
+from spm_bot.Event import Event
+from scheduler.EventScheduler import EventScheduler
+from scheduler.TimeRange import TimeRange
 from database.MockDatabase import MockDatabase
 from spm_bot.commands.ArgsTestCommand import ArgsTestCommand
 from spm_bot.commands.EventAdminCommand import EventAdminCommand
 from spm_bot.commands.PingPongCommand import PingPongCommand
 from spm_bot.commands.AbstractCommand import AbstractCommand
+from spm_bot.commands.ReportCommand import ReportCommand
 
 
 class DiscordBot:
@@ -17,7 +23,7 @@ class DiscordBot:
 
     def __init__(self, fake_database=False):
         # Misc. initializations go here:
-        self.__scheduler = None
+        self.__scheduler = None   #   None
 
         # Initialize variables related to the discord connection:
         self.client = discord.Client()
@@ -33,10 +39,13 @@ class DiscordBot:
         self.command_prefix = "!"  # What should a message start with to identify it as a command?
         self.__commands = {}
 
+        self.attach_scheduler(EventScheduler())
+
         # TODO Register actual commands here, these are simply here to show the system in action, remove them later
         self.register_command(PingPongCommand(self, 'ping', aliases=['pingpong', 'pongping']))
         self.register_command(ArgsTestCommand(self, 'test'))
         self.register_command(EventAdminCommand(self, 'event'))
+        self.register_command(ReportCommand(self, 'report'))
 
     # Finish setting up the object with the scheduler
     def attach_scheduler(self, scheduler):
