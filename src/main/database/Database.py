@@ -103,7 +103,7 @@ class Database:
         event = Event(document['start'], document['end'], document['organizer'], document['guild'])
 
         # We need to construct the attendees to fit the Event class format
-        for attendee, list_of_bad_times in document['attendees']:
+        for attendee, list_of_bad_times in document['attendees'].items():
 
             timerange_list = []
 
