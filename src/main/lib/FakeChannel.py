@@ -18,14 +18,15 @@ class FakeChannel(TextChannel):
     # callback that may be listening to this channel
     async def send(self, content=None, *, tts=False, embed=None, file=None,
                                           files=None, delete_after=None, nonce=None,
-                                          allowed_mentions=None, **kwargs):
-        self.messages.append(content)
 
-        print(f"[Fake Discord Channel Incoming Message]: {content}")
+                                          allowed_mentions=None, **kwargs):
 
         author_override = kwargs['author'] if 'author' in kwargs else None
+        msg = FakeMessage.FakeMessage(content, self, author=author_override, embeds=[embed])
+        self.messages.append(msg)
 
-        args = [FakeMessage.FakeMessage(content, self, author=author_override)]
+        print(f"[Fake Discord Channel Incoming Message]: {content} - Embed?: {embed is not None}")
+        args = [msg]
 
         for callback in self.callbacks:
             await callback(*args)

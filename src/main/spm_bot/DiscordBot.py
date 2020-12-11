@@ -92,6 +92,10 @@ class DiscordBot:
     #  and, if so, pass to _parse_command to check and delegate if so
     async def on_message(self, message: Message):
 
+        # Happens when nothing is in the message, can happen with embeds, pictures, etc
+        if not message.content:
+            return
+
         # Does the message start with our prefix? If so parse it and handle it
         if message.content.startswith(self.command_prefix):
             await self._parse_command(message)
