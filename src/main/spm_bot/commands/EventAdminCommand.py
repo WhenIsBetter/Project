@@ -194,8 +194,7 @@ class EventAdminCommand(AbstractCommand):
             await self.send_embed(message.channel, color=Color.red(), fields=[["Invalid Dates!", "The start date must be before the end date!"]])
             return
 
-        event = Event(start_datetime, end_datetime)
-        event.eventOrganizer = message.author.id
+        event = Event(start_datetime, end_datetime, message.author.id, message.guild.id)
 
         document = await self.bot.database.create_event(event)
 

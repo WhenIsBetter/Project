@@ -21,13 +21,13 @@ def expect(actual, expected):
         raise AssertionError()
 
 def __bad_testing():
-    abcdEvent = Event(datetime.fromisoformat("2020-10-30 04:00"), datetime.fromisoformat("2020-10-30 05:30"))
+    abcdEvent = Event(datetime.fromisoformat("2020-10-30 04:00"), datetime.fromisoformat("2020-10-30 05:30"), None, None)
     abcdEvent.attendees = [ None ]
     bot.scheduler.add_event(abcdEvent)
 
     morning_event = [None, None, None]
     for i in range(3):
-        morning_event[i] = Event(datetime.fromisoformat("2020-12-04 07:15"), datetime.fromisoformat("2020-12-04 11:45"))
+        morning_event[i] = Event(datetime.fromisoformat("2020-12-04 07:15"), datetime.fromisoformat("2020-12-04 11:45"), None, None)
         morning_event[i].attendees = [ None, None, None ]
         bot.scheduler.add_event(morning_event[i])
         bot.scheduler.overlay_availability(morning_event[i], TimeRange(datetime.fromisoformat("2020-12-04 08:30"), datetime.fromisoformat("2020-12-04 10:30")))

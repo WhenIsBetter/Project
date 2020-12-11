@@ -4,6 +4,7 @@ import string
 import mongomock
 
 from database import Database
+from scheduler.TimeRange import TimeRange
 from spm_bot.Event import Event
 
 
@@ -38,13 +39,24 @@ class MockDatabase(Database.Database):
     # Creates a new event to store in the database for edit/retrieval later, returns the document once created
     async def create_event(self, event: Event) -> dict:
 
+        # In order to store time ranges correctly, we neeed to mutate it into something mongo can understand
+        new_attendees = {}
+        for attendee, list_of_bad_times in event.attendees.items():
+            # A list of tuples
+            tuple_ranges = []
+            for bad_time in list_of_bad_times:
+                tuple_ranges.append((bad_time.start, bad_time.end))
+
+            new_attendees[attendee] = tuple_ranges
+
         # Mongo documents are literally just python dictionaries
         document = {
             '_id': await self.generate_unique_id(),
             'start': event.start,
             'end': event.end,
+            'guild': event.guild,
             'organizer': event.eventOrganizer,
-            'attendees': event.attendees
+            'attendees': new_attendees
         }
 
         # Insert the document to the database and return it if we need further processing where this was called
@@ -61,9 +73,17 @@ class MockDatabase(Database.Database):
             return None
 
         # Construct an event object to return
-        event = Event(document['start'], document['end'])
-        event.eventOrganizer = document['organizer']
-        event.attendees = document['attendees']
+        event = Event(document['start'], document['end'], document['organizer'], document['guild'])
+
+        # We need to construct the attendees to fit the Event class format
+        for attendee, list_of_bad_times in document['attendees']:
+
+            timerange_list = []
+
+            for bad_time in list_of_bad_times:
+                timerange_list.append(TimeRange(bad_time[0], bad_time[1]))
+
+            event.update_attendee_conflicting_times(attendee, timerange_list)
         return event
 
     # Pass in event id and a dictionary that contains keys to updated values to overwrite, for example, passing in a
