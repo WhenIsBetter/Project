@@ -24,10 +24,8 @@ class CalendarTestCommand(AbstractCommand):
             # get token from user over direct message
             user_dm_channel = await user.create_dm()
             await user_dm_channel.send("you need to authenticate with google calendar "
-                                       "for this bot to be able to schedule events for you\n")
-            auth_url = get_authorization_url()
-            await user_dm_channel.send(
-                "visit this url and paste the token returned to you into this chat: {}".format(auth_url))
+                                       "for this bot to be able to schedule events for you\n"
+                                       "visit this url and paste the token returned to you into this chat: {}".format(get_authorization_url()))
             pass
         else:
             await get_events(user_id, start_date, end_date)
