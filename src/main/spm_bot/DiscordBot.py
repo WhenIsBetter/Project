@@ -4,7 +4,7 @@ import discord
 
 
 # Represents an instance of the bot for one specific server
-from discord import Message
+from discord import Message, DMChannel
 
 from database.Database import Database
 from spm_bot.Event import Event
@@ -14,6 +14,7 @@ from database.MockDatabase import MockDatabase
 from spm_bot.commands.ArgsTestCommand import ArgsTestCommand
 from spm_bot.commands.EventAdminCommand import EventAdminCommand
 from spm_bot.commands.PingPongCommand import PingPongCommand
+from spm_bot.commands.CalendarTestCommand import CalendarTestCommand
 from spm_bot.commands.AbstractCommand import AbstractCommand
 from spm_bot.commands.ReportCommand import ReportCommand
 
@@ -45,6 +46,7 @@ class DiscordBot:
         self.register_command(PingPongCommand(self, 'ping', aliases=['pingpong', 'pongping']))
         self.register_command(ArgsTestCommand(self, 'test'))
         self.register_command(EventAdminCommand(self, 'event'))
+        self.register_command(CalendarTestCommand(self, 'calendar', aliases=['calendartest', 'testcalendar']))
         self.register_command(ReportCommand(self, 'report'))
 
     # Finish setting up the object with the scheduler
@@ -101,9 +103,25 @@ class DiscordBot:
     #  and, if so, pass to _parse_command to check and delegate if so
     async def on_message(self, message: Message):
 
+        # Is the message a direct message? If so pass it on to _parse_dm, also verify that the bot is not parsing
+        # it's own messages so we don't infinite loop
+        if isinstance(message.channel, DMChannel) and message.author.id != self.client.user.id:
+            await self._parse_dm(message)
+
         # Does the message start with our prefix? If so parse it and handle it
         if message.content.startswith(self.command_prefix):
             await self._parse_command(message)
+
+    # Internal function, taking a discord message object,
+    #  that handles the contents of a direct message to the bot
+    async def _parse_dm(self, message: Message):
+        # TODO check if dm is an auth code, we currently are assuming any dm's sent to the bot are auth codes
+        await self.save_auth_code(message.author.id, message.content)  # store token in database
+
+        # TEMPORARY, this reply is just used to verify that this method works
+        # await message.channel.send("--dm read--\nauthor: {}\ncontent: {}".format(message.author.id, message.content))
+
+
 
     # Internal function, taking a discord message object,
     #  that delegates command responses to an appropriate method
@@ -124,6 +142,25 @@ class DiscordBot:
         # provided without args, we will have an empty list.
         print(f"[Commands] ({message.created_at}) {message.author} used command: '{command_instance.get_name()}'")
         await command_instance.execute(message, split_message[1:])
+
+    # save authentication code into database so it can be loaded as needed
+    async def save_auth_code(self, discord_user_id, auth_code):  # TODO implement
+        # temporary print to test that the method runs correctly
+        # print("-----\n"
+        #    "save_auth_code received code\n"
+        #    "user id: {}\n"
+        #    "code: {}\n"
+        #    "-----".format(discord_user_id, auth_code))
+        await self.__database.add_calendar_creds(discord_user_id, auth_code)
+
+        pass
+
+    # load authentication code from database for a given discord user id
+    # returns: calendarapi credentials for user in plaintext, returns None value if credentials are not found
+    async def load_auth_code(self, discord_user_id):  # TODO implement
+        auth_code = await Database().get_calendar_creds(discord_user_id)
+        # print("auth code loaded for user {}\ncode: {}".format(discord_user_id, auth_code))
+        return auth_code
 
 
     # TODO
