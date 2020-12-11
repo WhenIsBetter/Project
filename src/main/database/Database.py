@@ -55,7 +55,7 @@ class Database:
             for bad_time in list_of_bad_times:
                 tuple_ranges.append( (bad_time.start, bad_time.end) )
 
-            new_attendees[attendee] = tuple_ranges
+            new_attendees[str(attendee)] = tuple_ranges
 
 
         # Mongo documents are literally just python dictionaries
@@ -110,7 +110,7 @@ class Database:
             for bad_time in list_of_bad_times:
                 timerange_list.append(TimeRange(bad_time[0], bad_time[1]))
 
-            event.update_attendee_conflicting_times(attendee, timerange_list)
+            event.update_attendee_conflicting_times(int(attendee), timerange_list)
 
         return event
 
