@@ -23,7 +23,9 @@ class FakeChannel(TextChannel):
 
         print(f"[Fake Discord Channel Incoming Message]: {content}")
 
-        args = [FakeMessage.FakeMessage(content, self)]
+        author_override = kwargs['author'] if 'author' in kwargs else None
+
+        args = [FakeMessage.FakeMessage(content, self, author=author_override)]
 
         for callback in self.callbacks:
             await callback(*args)
