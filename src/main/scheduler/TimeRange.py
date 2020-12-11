@@ -29,7 +29,7 @@ class TimeRange:
             raise ValueError("AvailableTime: start must be a Date (datetime.datetime)")
         if end is None or not isinstance(end, datetime.datetime):
             raise ValueError("AvailableTime: end must be a Date (datetime.datetime)")
-        if (end - start) <= datetime.timedelta(0):  # note: date - date = datetime.timedelta
+        if end < start:  # note: date - date = datetime.timedelta
             raise ValueError("AvailableTime: end must be after start")
 
         self.__start = start
