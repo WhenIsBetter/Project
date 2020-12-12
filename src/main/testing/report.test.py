@@ -23,14 +23,14 @@ def expect(actual, expected):
         raise AssertionError()
 
 def __bad_testing():
-    abcdEvent = Event(datetime.fromisoformat("2020-10-30 04:00"), datetime.fromisoformat("2020-10-30 05:30"))
+    abcdEvent = Event(datetime.fromisoformat("2020-10-30 04:00"), datetime.fromisoformat("2020-10-30 05:30"), None, None)
     abcdEvent.attendees = [ None ]
     abcdEvent.eid = ''.join([random.choice(string.ascii_uppercase + string.digits) for _ in range(49)])
     bot.scheduler.add_event(abcdEvent)
 
     morning_event = [None, None, None]
     for i in range(3):
-        morning_event[i] = Event(datetime.fromisoformat("2020-12-04 07:15"), datetime.fromisoformat("2020-12-04 11:45"))
+        morning_event[i] = Event(datetime.fromisoformat("2020-12-04 07:15"), datetime.fromisoformat("2020-12-04 11:45"), None, None)
         morning_event[i].attendees = [ None, None, None ]
         morning_event[i].eid = ''.join([random.choice(string.ascii_uppercase + string.digits) for _ in range(50+i)])
         bot.scheduler.add_event(morning_event[i])
@@ -60,15 +60,15 @@ __report_Com._ReportCommand__get_db_call = __get_db_call.__get__(__report_Com, R
 # Test default reply
 async def test_report_fail(loop):
     await fake_channel.send("!report")
-    expect( fake_channel.messages[-1], "Report command: Bad arguments! Usage: !report <event ID> [missing (# or %)]")
+    expect( fake_channel.messages[-1].content, "Report command: Bad arguments! Usage: !report <event ID> [missing (# or %)]")
 
 
 # Test other bad commands
 async def test_miss_fail(loop):
     await fake_channel.send("!report abcd ishkamilligheeallakazatzkeeumpetybumptylaoooooh")
-    expect( fake_channel.messages[-1], "Report command: Bad arguments! Usage: !report <event ID> [missing (# or %)]")
+    expect( fake_channel.messages[-1].content, "Report command: Bad arguments! Usage: !report <event ID> [missing (# or %)]")
     await fake_channel.send("!report abcd missing 2 missing")
-    expect( fake_channel.messages[-1], "Report command: Bad arguments! Usage: !report <event ID> [missing (# or %)]")
+    expect( fake_channel.messages[-1].content, "Report command: Bad arguments! Usage: !report <event ID> [missing (# or %)]")
 
 # Test report with basic example
 async def test_report_basic(loop):
@@ -82,27 +82,27 @@ Event abcd: Fri 30 Oct, 04:00 AM - 05:30 AM
 
 ### +-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-+ ###
 '''
-    expect(fake_channel.messages[-1], expected_result)
+    expect(fake_channel.messages[-1].content, expected_result)
     await fake_channel.send("!report abcd missing 0")
-    expect( fake_channel.messages[-1], expected_result)
+    expect( fake_channel.messages[-1].content, expected_result)
     await fake_channel.send("!report abcd miss 0")
-    expect( fake_channel.messages[-1], expected_result)
+    expect( fake_channel.messages[-1].content, expected_result)
 
 # test with bad missing param
 async def test_report_miss(loop):
     bad_msg = "The number of people missing must be an integer between 0 and the number attending!"
     await fake_channel.send("!report abcd missing 1")
-    expect(fake_channel.messages[-1], bad_msg )
+    expect(fake_channel.messages[-1].content, bad_msg )
     await fake_channel.send("!report abcd missing -1")
-    expect(fake_channel.messages[-1], bad_msg )
+    expect(fake_channel.messages[-1].content, bad_msg )
     await fake_channel.send("!report abcd miss 100%")
-    expect(fake_channel.messages[-1], bad_msg )
+    expect(fake_channel.messages[-1].content, bad_msg )
 
 
 # test with more real call
 async def test_report_comp(loop):
     await fake_channel.send("!report m1 missing 2")
-    expect(fake_channel.messages[-1], '''### +-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-+ ###
+    expect(fake_channel.messages[-1].content, '''### +-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-+ ###
 Event m1: Fri 04 Dec, 07:15 AM - 11:45 AM
 
  # Available times with everyone present:
@@ -125,7 +125,7 @@ Event m1: Fri 04 Dec, 07:15 AM - 11:45 AM
 ### +-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-+ ###
 ''')
     await fake_channel.send("!report m2 missing 2")
-    expect(fake_channel.messages[-1], '''### +-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-+ ###
+    expect(fake_channel.messages[-1].content, '''### +-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-+ ###
 Event m2: Fri 04 Dec, 07:15 AM - 11:45 AM
 
  # Available times with everyone present:
@@ -147,7 +147,7 @@ Event m2: Fri 04 Dec, 07:15 AM - 11:45 AM
 ### +-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-+ ###
 ''')
     await fake_channel.send("!report m3 missing 2")
-    expect(fake_channel.messages[-1], '''### +-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-+ ###
+    expect(fake_channel.messages[-1].content, '''### +-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-+ ###
 Event m3: Fri 04 Dec, 07:15 AM - 11:45 AM
 
  # Available times with everyone present:

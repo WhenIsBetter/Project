@@ -103,13 +103,16 @@ class DiscordBot:
     #  and, if so, pass to _parse_command to check and delegate if so
     async def on_message(self, message: Message):
 
+        # Happens when nothing is in the message, can happen with embeds, pictures, etc
+        if not message.content:
+            return
+
         # Is the message a direct message? If so pass it on to _parse_dm, also verify that the bot is not parsing
         # it's own messages so we don't infinite loop
         if isinstance(message.channel, DMChannel) and message.author.id != self.client.user.id:
             await self._parse_dm(message)
-
         # Does the message start with our prefix? If so parse it and handle it
-        if message.content.startswith(self.command_prefix):
+        elif message.content.startswith(self.command_prefix):
             await self._parse_command(message)
 
     # Internal function, taking a discord message object,
@@ -158,7 +161,7 @@ class DiscordBot:
     # load authentication code from database for a given discord user id
     # returns: calendarapi credentials for user in plaintext, returns None value if credentials are not found
     async def load_auth_code(self, discord_user_id):  # TODO implement
-        auth_code = await Database().get_calendar_creds(discord_user_id)
+        auth_code = await self.__database.get_calendar_creds(discord_user_id)
         # print("auth code loaded for user {}\ncode: {}".format(discord_user_id, auth_code))
         return auth_code
 

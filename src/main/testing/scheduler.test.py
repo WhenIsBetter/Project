@@ -101,9 +101,9 @@ def linkedlist_checks():
 @ptest
 def event_test():
     ES = EventScheduler()
-    ev = Event(datetime.datetime(year=1959, month=2, day=3, hour=12, minute=57), datetime.datetime.today())
+    ev = Event(datetime.datetime(year=1959, month=2, day=3, hour=12, minute=57), datetime.datetime.today(), None, None)
     ev.eid = ''.join([random.choice(string.ascii_uppercase + string.digits) for _ in range(8)])
-    ev2 = Event(datetime.datetime(year=1953, month=1, day=8, hour=0, minute=0, second=8), datetime.datetime.today())
+    ev2 = Event(datetime.datetime(year=1953, month=1, day=8, hour=0, minute=0, second=8), datetime.datetime.today(), None, None)
     ev2.eid = ''.join([random.choice(string.ascii_uppercase + string.digits) for _ in range(8)])
     while ev.eid == ev2.eid:
          ev2.eid = ''.join([random.choice(string.ascii_uppercase + string.digits) for _ in range(8)])
@@ -144,7 +144,7 @@ def testing_scenario1(a, b):
     def CD(hours):  # 'current date' -- convenience function here
         return datetime.datetime.utcfromtimestamp(0) + datetime.timedelta(hours=hours)
 
-    ev = Event(CD(a), CD(b))
+    ev = Event(CD(a), CD(b), None, None)
     ev.eid = ''.join([random.choice(string.ascii_uppercase + string.digits) for _ in range(8)])
 
     ES = EventScheduler()

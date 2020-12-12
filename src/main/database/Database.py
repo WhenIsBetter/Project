@@ -7,6 +7,7 @@ import string
 
 from motor import motor_asyncio
 
+from scheduler.TimeRange import TimeRange
 from spm_bot.Event import Event
 
 # TODO: maybe move this to a config later down the road, if someone were to deploy this and have an external db running
@@ -46,13 +47,25 @@ class Database:
     # Creates a new event to store in the database for edit/retrieval later, returns the document once created
     async def create_event(self, event: Event) -> dict:
 
+        # In order to store time ranges correctly, we neeed to mutate it into something mongo can understand
+        new_attendees = {}
+        for attendee, list_of_bad_times in event.attendees.items():
+            # A list of tuples
+            tuple_ranges = []
+            for bad_time in list_of_bad_times:
+                tuple_ranges.append( (bad_time.start, bad_time.end) )
+
+            new_attendees[str(attendee)] = tuple_ranges
+
+
         # Mongo documents are literally just python dictionaries
         document = {
             '_id': await self.generate_unique_id(),
             'start': event.start,
             'end': event.end,
+            'guild': event.guild,
             'organizer': event.eventOrganizer,
-            'attendees': event.attendees
+            'attendees': new_attendees
         }
 
         # Insert the document to the database and return it if we need further processing where this was called
@@ -87,10 +100,19 @@ class Database:
             return None
 
         # Construct an event object to return
-        event = Event(document['start'], document['end'])
-        event.eventOrganizer = document['organizer']
-        event.attendees = document['attendees']
+        event = Event(document['start'], document['end'], document['organizer'], document['guild'])
         event.eid = id
+
+        # We need to construct the attendees to fit the Event class format
+        for attendee, list_of_bad_times in document['attendees'].items():
+
+            timerange_list = []
+
+            for bad_time in list_of_bad_times:
+                timerange_list.append(TimeRange(bad_time[0], bad_time[1]))
+
+            event.update_attendee_conflicting_times(int(attendee), timerange_list)
+
         return event
 
     # Pass in event id and a dictionary that contains keys to updated values to overwrite, for example, passing in a
