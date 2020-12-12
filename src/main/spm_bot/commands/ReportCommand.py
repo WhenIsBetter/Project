@@ -75,6 +75,7 @@ class ReportCommand(AbstractCommand):
         print_buffer += "\n\n"
 
         last_missing = 0
+        print(event.__dict__)
         times = self.bot.scheduler.calc_times(event, max_missing=0)
         missing = 1
         temp_times = self.bot.scheduler.calc_times(event, max_missing=1)

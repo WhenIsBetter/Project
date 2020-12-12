@@ -145,6 +145,7 @@ def testing_scenario1(a, b):
         return datetime.datetime.utcfromtimestamp(0) + datetime.timedelta(hours=hours)
 
     ev = Event(CD(a), CD(b))
+    ev.eid = ''.join([random.choice(string.ascii_uppercase + string.digits) for _ in range(8)])
 
     ES = EventScheduler()
     ES.add_event(ev)

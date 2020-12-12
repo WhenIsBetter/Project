@@ -1,3 +1,5 @@
+import random
+import string
 from datetime import datetime
 
 from scheduler.TimeRange import TimeRange
@@ -23,12 +25,14 @@ def expect(actual, expected):
 def __bad_testing():
     abcdEvent = Event(datetime.fromisoformat("2020-10-30 04:00"), datetime.fromisoformat("2020-10-30 05:30"))
     abcdEvent.attendees = [ None ]
+    abcdEvent.eid = ''.join([random.choice(string.ascii_uppercase + string.digits) for _ in range(49)])
     bot.scheduler.add_event(abcdEvent)
 
     morning_event = [None, None, None]
     for i in range(3):
         morning_event[i] = Event(datetime.fromisoformat("2020-12-04 07:15"), datetime.fromisoformat("2020-12-04 11:45"))
         morning_event[i].attendees = [ None, None, None ]
+        morning_event[i].eid = ''.join([random.choice(string.ascii_uppercase + string.digits) for _ in range(50+i)])
         bot.scheduler.add_event(morning_event[i])
         bot.scheduler.overlay_availability(morning_event[i], TimeRange(datetime.fromisoformat("2020-12-04 08:30"), datetime.fromisoformat("2020-12-04 10:30")))
         bot.scheduler.overlay_availability(morning_event[i], TimeRange(datetime.fromisoformat("2020-12-04 08:30"), datetime.fromisoformat("2020-12-04 10:30")))

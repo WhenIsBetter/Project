@@ -190,6 +190,7 @@ class EventScheduler:
         self._event_lists[event.eid] = EventScheduler._List()
 
     def _check_registered_event(self, event):
+        assert(event.eid != '')
         if event.eid not in self._event_lists:
             raise Exception("Event wasn't added to current events")
         return self._event_lists[event.eid]
