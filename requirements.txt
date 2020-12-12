@@ -2,3 +2,6 @@ discord
 dpytest
 motor
 git+https://github.com/mongomock/mongomock.git
+pytz
+google-api-python-client
+google-auth-oauthlib

@@ -5,6 +5,16 @@ from discord import Message, Member, Embed, Color
 from spm_bot.Event import Event
 from spm_bot.commands.AbstractCommand import AbstractCommand
 
+# Datetime parsing helpers
+months = [None, "Jan.", "Feb.", "Mar.", "Apr.", "May", "Jun.", "Jul.", "Aug.", "Sep.", "Oct.", "Nov.", "Dec."]
+num_suffix = ["th", "st", "nd", 'rd']
+
+def get_num_suffix(num):
+    if num > 3:
+        return 'th'
+    else:
+        return num_suffix[num]
+
 
 class DateFormatException(BaseException):
     ERROR_MESSAGE = 'date must be in the format of: `MM/DD/YYYY-HH:MM-(AM/PM)` ex. `11/6/2020-8:00-AM`'
@@ -31,11 +41,20 @@ class EventAdminCommand(AbstractCommand):
             fields = [[]]
         emb = Embed(title=header, color=color)
         for field in fields:
-            assert len(field > 2)
-            emb.add_field(name=field[0], value=field[1], inline=field[2])
-        emb.set_author(name=author)
-        emb.set_footer(text=footer)
-        await channel.send(emb)
+            assert len(field) > 1
+
+            if len(field) > 2:
+                emb.add_field(name=field[0], value=field[1], inline=field[2])
+            else:
+                emb.add_field(name=field[0], value=field[1], inline=False)
+
+        if author:
+            emb.set_author(name=author)
+
+        if footer:
+            emb.set_footer(text=footer)
+
+        await channel.send(embed=emb)
 
     # TODO: make role name a config option
     def is_event_admin(self, member: Member):
@@ -53,18 +72,18 @@ class EventAdminCommand(AbstractCommand):
 
         # Only event admins can run this command
         if not self.is_event_admin(message.author):
-            await message.channel.send(
-                f"{message.author.mention} Only users with the `Event Admin` role can use this command!")
+            await self.send_embed(message.channel, color=Color.dark_red(),
+                                  fields=[['Permission Denied!', f"Only users with the `Event Admin` role can use this command!", True]])
             return
 
         if not args:
-            await message.channel.send(f"{message.author.mention} Missing arguments! Usage: {self.base_usage}")
+            await self.send_embed(message.channel, color=Color.dark_red(), fields=[['Missing Arguments!', f"{self.base_usage}", True]])
             return
 
         subcommand = args[0]
 
         if subcommand.lower() not in (self.create_arg, self.modify_arg, self.delete_arg):
-            await message.channel.send(f"{message.author.mention} Missing arguments! Usage: {self.base_usage}")
+            await self.send_embed(message.channel, color=Color.dark_red(), fields=[['Invalid Subcommand!', f"{self.base_usage}", True]])
             return
 
         if subcommand.lower() == self.create_arg:
@@ -131,11 +150,30 @@ class EventAdminCommand(AbstractCommand):
         except OverflowError:
             raise DateFormatException(DateFormatException.ERROR_MESSAGE)
 
+    # Takes a datetime object and gives a clean representation of it
+    @staticmethod
+    async def clean_datetime(dt: datetime):
+
+        actual_hour = dt.hour
+        am_pm = "AM" if dt.hour < 12 else "PM"
+
+        if actual_hour == 0:
+            actual_hour = 12
+        elif actual_hour > 12:
+            actual_hour = actual_hour - 12
+
+        actual_min = str(dt.minute)
+        if dt.minute < 10:
+            actual_min = f"0{actual_min}"
+
+
+        return f"{months[dt.month]} {dt.day}{get_num_suffix(dt.day)}, {dt.year} at {actual_hour}:{actual_min}{am_pm}"
+
     async def _process_create_subcommand(self, message: Message, args: list):
 
         # Need the arg that invokes this subcommand, a start date, and end date at the least
         if len(args) < 3:
-            await message.channel.send(f"{message.author.mention} Missing arguments! Usage: {self.create_usage}")
+            await self.send_embed(message.channel, color=Color.red(), fields=[['Missing Arguments!', f"{self.create_usage}", True]])
             return
 
         start_date = args[1]  # Don't freak out, args[0] is 'create'
@@ -148,32 +186,32 @@ class EventAdminCommand(AbstractCommand):
             start_datetime = await self.parse_datetime(start_date)
             end_datetime = await self.parse_datetime(end_date)
         except DateFormatException:
-            await message.channel.send(
-                f"{message.author.mention} Incorrect date format! {DateFormatException.ERROR_MESSAGE}")
+            await self.send_embed(message.channel, color=Color.red(),
+                                  fields=[['Incorrect date format!', f"{DateFormatException.ERROR_MESSAGE}", True]])
             return
 
-        event = Event(start_datetime, end_datetime)
-        event.eventOrganizer = message.author.id
+        if start_datetime > end_datetime:
+            await self.send_embed(message.channel, color=Color.red(), fields=[["Invalid Dates!", "The start date must be before the end date!"]])
+            return
+
+        event = Event(start_datetime, end_datetime, message.author.id, message.guild.id)
 
         document = await self.bot.database.create_event(event)
 
-        # TODO: make look pretty with embeds
-        await message.channel.send(
-            f"{message.author.mention} Created the event in the database! You can refer to this event "
-            f"by the ID: `{document['_id']}`\n[DEBUG] {start_datetime} --- {end_datetime}")
+        await self.send_embed(message.channel, color=Color.green(), header=f'Created the event: `{document["_id"]}`!',
+                              fields=[['Starts', await self.clean_datetime(start_datetime), True], ['Ends', await self.clean_datetime(end_datetime), True]])
 
     async def _process_modify_subcommand(self, message: Message, args: list):
 
         if len(args) < 4:
-            await message.channel.send(f"{message.author.mention} Missing arguments! Usage: {self.modify_usage}")
+            await self.send_embed(message.channel, color=Color.red(), fields=[['Missing Arguments!', f"{self.modify_usage}", True]])
             return
 
         id = args[1]
         event = await self.bot.database.get_event(id)
         if not event:
-            await message.channel.send(
-                f"{message.author.mention} No event found with the ID `{id}`. Please verify the ID and "
-                f"try again.")
+            await self.send_embed(message.channel, color=Color.red(),
+                                  fields=[['No event found!', f"Please verify the ID `{id}` and try again.", True]])
             return
 
         start_date = args[2]
@@ -183,39 +221,41 @@ class EventAdminCommand(AbstractCommand):
             start_datetime = await self.parse_datetime(start_date)
             end_datetime = await self.parse_datetime(end_date)
         except DateFormatException:
-            await message.channel.send(
-                f"{message.author.mention} Incorrect date format! {DateFormatException.ERROR_MESSAGE}")
+            await self.send_embed(message.channel, color=Color.red(),
+                                  fields=[['Incorrect date format!', f"{DateFormatException.ERROR_MESSAGE}", True]])
+            return
+
+        if start_datetime > end_datetime:
+            await self.send_embed(message.channel, color=Color.red(), fields=[["Invalid Dates!", "The start date must be before the end date!"]])
             return
 
         # Update the event in the db
         new_event = await self.bot.database.update_event(id, {'start': start_datetime,
                                                     'end': end_datetime})
 
-        await message.channel.send(
-            f"{message.author.mention} Event `{id}` has been updated!\n[DEBUG] OLD: {event.start} --- {event.end}\nNEW: {new_event.start} --- {new_event.end}")
+        await self.send_embed(message.channel, color=Color.green(), header="Event Updated!",
+                              fields=[["Event ID", f"`{id}`", True], ["Now Starts At", await self.clean_datetime(start_datetime), True], ["Now Ends At", await self.clean_datetime(end_datetime), True]])
 
     async def _process_delete_subcommand(self, message: Message, args: list):
 
         if len(args) < 2:
-            await message.channel.send(f"{message.author.mention} Missing arguments! Usage: {self.delete_usage}")
+            await self.send_embed(message.channel, color=Color.red(), fields=[['Missing Arguments!', f"{self.delete_usage}", True]])
             return
 
         id = args[1]
         event = await self.bot.database.get_event(id)
         if not event:
-            await message.channel.send(
-                f"{message.author.mention} No event found with the ID `{id}`. Please verify the ID and "
-                f"try again.")
+            await self.send_embed(message.channel, color=Color.red(),
+                                  fields=[['No event found!', f"Please verify the ID `{id}` and try again.", True]])
             return
 
         try:
             if args[2].upper() == 'CONFIRM':
                 await self.bot.database.delete_event(id)
-                await message.channel.send(f"Deleted event `{id}`.")
+                await self.send_embed(message.channel, color=Color.green(),
+                                      fields=[['Event Deleted!', f"Event with the ID: `{id}` has been deleted.", True]])
                 return
         except IndexError:
             pass
 
-        # TODO: again, make this look prettier with embeds
-        await message.channel.send(
-            f"{message.author.mention} Are you sure you want to delete the event with the ID `{id}`?\n[DEBUG] {event.start} --- {event.end}\nPlease type `{self.bot.command_prefix}{self.name} {self.delete_arg} {id} CONFIRM` to proceed.")
+        await self.send_embed(message.channel, color=Color.orange(), fields=[['Are you sure?', f"Are you sure you want to delete the event with the ID `{id}`?"]], footer=f"Please type `{self.bot.command_prefix}{self.name} {self.delete_arg} {id} CONFIRM` to proceed.")
