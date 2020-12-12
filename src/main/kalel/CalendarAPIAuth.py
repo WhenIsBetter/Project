@@ -1,6 +1,8 @@
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 
+from scheduler.TimeRange import TimeRange
+
 SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
 flow = InstalledAppFlow.from_client_secrets_file(
     '../../deploy/credentials.json', SCOPES, redirect_uri="urn:ietf:wg:oauth:2.0:oob")
@@ -45,4 +47,9 @@ async def get_events(bot, discord_user_id, start_date, end_date):
         print('No upcoming events found.')
     for event in events:
         start = event['start'].get('dateTime', event['start'].get('date'))
-        print(start, event['summary'])
+        end = event['end'].get('dateTime', event['end'].get('date'))
+        userrange = TimeRange(start, end)
+
+        for eid in bot.scheduler.get_events():
+            ourevent = bot.database.get_event(eid)
+            bot.scheduler.overlay_availability( ourevent , userrange)
