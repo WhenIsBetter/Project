@@ -90,6 +90,7 @@ class Database:
         event = Event(document['start'], document['end'])
         event.eventOrganizer = document['organizer']
         event.attendees = document['attendees']
+        event.eid = id
         return event
 
     # Pass in event id and a dictionary that contains keys to updated values to overwrite, for example, passing in a

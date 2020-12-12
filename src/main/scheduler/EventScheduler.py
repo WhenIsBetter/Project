@@ -187,12 +187,12 @@ class EventScheduler:
     #  directly instantiate an Event? Or call a method here to create it,
     #   since Event is kind of under EventScheduler?
     def add_event(self, event):
-        self._event_lists[event] = EventScheduler._List()
+        self._event_lists[event.eid] = EventScheduler._List()
 
     def _check_registered_event(self, event):
-        if event not in self._event_lists:
+        if event.eid not in self._event_lists:
             raise Exception("Event wasn't added to current events")
-        return self._event_lists[event]
+        return self._event_lists[event.eid]
 
     # useful function for testing:
     '''

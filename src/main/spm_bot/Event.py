@@ -2,6 +2,7 @@ class Event:
 
     # public variables. If need be, we can make them properties for verification.
 
+    eid = ""
     start = None
     end = None
     eventOrganizer = None

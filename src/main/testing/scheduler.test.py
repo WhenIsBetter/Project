@@ -1,8 +1,11 @@
+import string
 import sys
 import multiprocessing
 import time
 import traceback
 import datetime
+import random
+
 from spm_bot.Event import Event
 from scheduler.EventScheduler import EventScheduler
 from scheduler.TimeRange import TimeRange
@@ -97,38 +100,42 @@ def linkedlist_checks():
 
 @ptest
 def event_test():
-     ES = EventScheduler()
-     ev = Event(datetime.datetime(year=1959, month=2, day=3, hour=12, minute=57), datetime.datetime.today())
-     ev2 = Event(datetime.datetime(year=1953, month=1, day=8, hour=0, minute=0, second=8), datetime.datetime.today())
-
-     # check it correctly errors on an unregistered event
-
-     try:
-         ES._check_registered_event(ev)
-         expect(0,1)
-     except Exception:
-         pass
-
-    # add event testing -- check it registers alright
-
-     ES.add_event(ev)
-
-     expect(ES._check_registered_event(ev) is not None, True)
+    ES = EventScheduler()
+    ev = Event(datetime.datetime(year=1959, month=2, day=3, hour=12, minute=57), datetime.datetime.today())
+    ev.eid = ''.join([random.choice(string.ascii_uppercase + string.digits) for _ in range(8)])
+    ev2 = Event(datetime.datetime(year=1953, month=1, day=8, hour=0, minute=0, second=8), datetime.datetime.today())
+    ev2.eid = ''.join([random.choice(string.ascii_uppercase + string.digits) for _ in range(8)])
+    while ev.eid == ev2.eid:
+         ev2.eid = ''.join([random.choice(string.ascii_uppercase + string.digits) for _ in range(8)])
 
     # check it correctly errors on an unregistered event
 
-     try:
-         ES._check_registered_event(ev2)
-         expect(0,1)
-     except Exception:
-         pass
+    try:
+        ES._check_registered_event(ev)
+        expect(0,1)
+    except Exception:
+        pass
 
-     ES.add_event(ev2)
+    # add event testing -- check it registers alright
+
+    ES.add_event(ev)
+
+    expect(ES._check_registered_event(ev) is not None, True)
+
+    # check it correctly errors on an unregistered event
+
+    try:
+        ES._check_registered_event(ev2)
+        expect(0,2)
+    except Exception:
+        pass
+
+    ES.add_event(ev2)
 
     # check get_events
 
-     for (i,j) in zip(ES.get_events(), [ev, ev2]):
-         expect(i, j)
+    for (i,j) in zip(ES.get_events(), [ev.eid, ev2.eid]):
+        expect(i, j)
 
 
 def testing_scenario1(a, b):
@@ -168,26 +175,26 @@ def testing_scenario2(a, b):
 @ptest
 def overlay_availability_test():
     (ev, ES, CD) = testing_scenario1(3, 10)
-    expect(ES._event_lists[ev].first.next.key, CD(4))
-    expect(ES._event_lists[ev].first.next.accum, 1)
-    expect(ES._event_lists[ev].first.next.next.key, CD(8))
-    expect(ES._event_lists[ev].first.next.next.accum, 0)
+    expect(ES._event_lists[ev.eid].first.next.key, CD(4))
+    expect(ES._event_lists[ev.eid].first.next.accum, 1)
+    expect(ES._event_lists[ev.eid].first.next.next.key, CD(8))
+    expect(ES._event_lists[ev.eid].first.next.next.accum, 0)
 
     (ev, ES, CD) = testing_scenario2(3, 10)
-    expect(ES._event_lists[ev].first.next.key, CD(4))
-    expect(ES._event_lists[ev].first.next.accum, 1)
-    expect(ES._event_lists[ev].first.next.next.key, CD(5))
-    expect(ES._event_lists[ev].first.next.next.accum, 2)
-    expect(ES._event_lists[ev].first.next.next.next.key, CD(6))
-    expect(ES._event_lists[ev].first.next.next.next.accum, 1)
-    expect(ES._event_lists[ev].first.next.next.next.next.key, CD(7))
-    expect(ES._event_lists[ev].first.next.next.next.next.accum, 2)
-    expect(ES._event_lists[ev].first.next.next.next.next.next.key, CD(8))
-    expect(ES._event_lists[ev].first.next.next.next.next.next.accum, 1)
-    expect(ES._event_lists[ev].first.next.next.next.next.next.next.key, CD(9))
-    expect(ES._event_lists[ev].first.next.next.next.next.next.next.accum, 0)
-    expect(ES._event_lists[ev].first.next.next.next.next.next.next.next.key, None)
-    expect(ES._event_lists[ev].first.next.next.next.next.next.next.next, ES._event_lists[ev].last)
+    expect(ES._event_lists[ev.eid].first.next.key, CD(4))
+    expect(ES._event_lists[ev.eid].first.next.accum, 1)
+    expect(ES._event_lists[ev.eid].first.next.next.key, CD(5))
+    expect(ES._event_lists[ev.eid].first.next.next.accum, 2)
+    expect(ES._event_lists[ev.eid].first.next.next.next.key, CD(6))
+    expect(ES._event_lists[ev.eid].first.next.next.next.accum, 1)
+    expect(ES._event_lists[ev.eid].first.next.next.next.next.key, CD(7))
+    expect(ES._event_lists[ev.eid].first.next.next.next.next.accum, 2)
+    expect(ES._event_lists[ev.eid].first.next.next.next.next.next.key, CD(8))
+    expect(ES._event_lists[ev.eid].first.next.next.next.next.next.accum, 1)
+    expect(ES._event_lists[ev.eid].first.next.next.next.next.next.next.key, CD(9))
+    expect(ES._event_lists[ev.eid].first.next.next.next.next.next.next.accum, 0)
+    expect(ES._event_lists[ev.eid].first.next.next.next.next.next.next.next.key, None)
+    expect(ES._event_lists[ev.eid].first.next.next.next.next.next.next.next, ES._event_lists[ev.eid].last)
 
 
 @ptest
