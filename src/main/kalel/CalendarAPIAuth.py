@@ -1,3 +1,5 @@
+import datetime
+
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 
@@ -46,8 +48,15 @@ async def get_events(bot, discord_user_id, start_date, end_date):
     if not events:
         print('No upcoming events found.')
     for event in events:
-        start = event['start'].get('dateTime', event['start'].get('date'))
-        end = event['end'].get('dateTime', event['end'].get('date'))
+
+
+        def clean_time(t_string):
+            # Remove the timezone offset
+            end = t_string.rfind('-')
+            return datetime.datetime.now().strptime(t_string[:end], "%Y-%m-%dT%H:%M:%S")
+
+        start = clean_time(event['start']['dateTime'])
+        end = clean_time(event['end']['dateTime'])
         userrange = TimeRange(start, end)
 
         for eid in bot.scheduler.get_events():
